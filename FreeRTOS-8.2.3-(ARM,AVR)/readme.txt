@@ -1,3 +1,6 @@
+Esta versão do FreeRTOS está originalmente disponível aqui:
+https://github.com/feilipu/Arduino_FreeRTOS_Library/releases/tag/8.2.3-18
+
 This is a port of FreeRTOS as Arduino libraries.
 
 The documentation for FreeRTOS is located here:
