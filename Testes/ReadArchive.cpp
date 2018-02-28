@@ -2,11 +2,11 @@
 #include <stdlib.h>
 
 #define MAX 112
+#define IN_FILE 0
 
 int main(void){
   FILE *entrada, *saida;
   char linha[MAX];
-  int n = 10;
 
   entrada = fopen("/dev/ttyUSB0", "r");
   saida = fopen("./saida.txt", "a");
@@ -15,7 +15,10 @@ int main(void){
   while(1) {
     linha[0] = 0;
     fgets(linha, MAX, entrada);
-    if(linha[0]){ fwrite(linha, sizeof(char), sizeof(linha), saida); n--; }
+    if(linha[0]){
+      if(IN_FILE) fwrite(linha, sizeof(char), sizeof(linha), saida);
+      else printf("%s", linha);
+    }
   }
   fclose(entrada);
   fclose(saida);
