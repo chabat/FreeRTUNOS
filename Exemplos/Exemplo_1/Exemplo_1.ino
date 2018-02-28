@@ -1,36 +1,33 @@
 #include <Arduino_FreeRTOS.h>
-
-/* Usado como contador para o loop, para criar um delay */ 
-#define mainDELAY_LOOP_COUNT   ( 0xfffff )
+ 
+#define mainDELAY_LOOP_COUNT   ( 0xfffff ) /* Usado como contador para o loop, para criar um delay */
 
 void vTarefa(void *pvParametros);
 
-void setup() {
-  /* Define a taxa de bits por segundo para transmissão de dados */ 
-  Serial.begin(9600);
+void setup() {   
+  Serial.begin(9600); /* Define a taxa de bits por segundo para transmissão de dados */
 
   /* Cria a tarefa */
-  xTaskCreate( vTarefa, "Tarefa", 200, NULL, 1, NULL );
+  xTaskCreate( vTarefa, /*Ponteiro para a função da tarefa*/
+              "Tarefa", /*Nome da tarefa (apenas para debug)*/
+              200, /*Tamanho da pilha*/
+              NULL,/*Parametro passado a tarefa*/ 
+              1, /*Prioridade*/
+              NULL /*O handle da tarefa*/ );
 
-  /* Inicia o escalonador */
-  vTaskStartScheduler();  
+  vTaskStartScheduler(); /* Inicia o escalonador */  
     
-  /* Se tudo deu certo, este trecho nunca será executado */
-  for( ;; );
+  for( ;; ); /* Se tudo deu certo, este trecho nunca será executado */
 }
 
 void vTarefa(void *pvParametros){
-  const char *pcString = "Tarefa Executando!\n";
-  volatile unsigned long ul;
+  const char *pcString = "Tarefa Executando!\n"; /*String que a tarefa imprime*/ 
+  volatile unsigned long ul; /*Variável para o contador*/
 
-  /* Tarefas são criadas em loops infinitos */
-  for( ;; ){
-    /* Imprime a string */
-    Serial.print(pcString); 
-    //vPrintString(pcString);
+  for( ;; ){ /* Tarefas são criadas em loops infinitos */
+    Serial.print(pcString); /* Imprime a string */ 
 
-    /* Implementação bruta de um atraso */ 
-    for(ul = 0; ul < mainDELAY_LOOP_COUNT; ul++);
+    for(ul = 0; ul < mainDELAY_LOOP_COUNT; ul++); /* Implementação bruta de um atraso */ 
   }
 }
 
