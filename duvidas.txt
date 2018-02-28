@@ -1,0 +1,7 @@
+#Dúvidas
+
+Porque em um while(1) o arquivo não é escrito, mas quando a quantidade de iterações no laço é fixa (por exemplo 10), ao terminar ele escreve?
+
+Existe um modo mais eficiente de monitorar a entrada serial?
+
+Existe a possibilidade de perder dados ao ler dessa maneira?
