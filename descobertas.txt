@@ -1,0 +1,8 @@
+#Descobertas:
+
+
+Ao tentarmos diminuir a quantidade da stack pela metade, não foi possível dobrar a quantidade de tasks.
+O motivo era que ela cria um TCB (Task control block). Porém ainda não sabemos quanto de memória ele ocupa.
+
+Aparentemente dentro do arquivo fonte do freertos no arduino, a tasks.c não permite usar fopen.
+
