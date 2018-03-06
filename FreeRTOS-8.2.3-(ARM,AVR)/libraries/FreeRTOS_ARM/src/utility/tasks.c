@@ -179,7 +179,7 @@ typedef struct tskTaskControlBlock
 	#if ( configUSE_NEWLIB_REENTRANT == 1 )
 		/* Allocate a Newlib reent structure that is specific to this task.
 		Note Newlib support has been included by popular demand, but is not
-		used by the FreeRTOS maintainers themselves.  FreeRTOS is not
+		used by the FreeRTOS maintainers themselvesTCB.  FreeRTOS is not
 		responsible for resulting newlib operation.  User must be familiar with
 		newlib and must provide system-wide implementations of the necessary
 		stubs. Be warned that (at the time of writing) the current newlib design
@@ -4474,4 +4474,3 @@ TickType_t uxReturn;
 #ifdef FREERTOS_MODULE_TEST
 	#include "tasks_test_access_functions.h"
 #endif
-
