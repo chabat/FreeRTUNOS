@@ -6,3 +6,9 @@ O motivo era que ela cria um TCB (Task control block). Porém ainda não sabemos
 
 Aparentemente dentro do arquivo fonte do freertos no arduino, a tasks.c não permite usar fopen.
 
+Parece que o tamanho de um ponteiro no arduino é 2 bytes, já que o sistema parece ter 16bits.
+
+Tamanho do TCB (Máximo e mínimo)
+
+-Ponteiro para o topo da pilha da tarefa: 2 bytes
+-MPU Wrapper: Provavelmente não usa, se usa: {BaseType_t xUsingStaticallyAllocatedStack; (1 byte) + xMPU_SETTINGS	xMPUSettings; (?) }

@@ -5,3 +5,12 @@ Porque em um while(1) o arquivo não é escrito, mas quando a quantidade de iter
 Existe um modo mais eficiente de monitorar a entrada serial?
 
 Existe a possibilidade de perder dados ao ler dessa maneira?
+
+Oque é um MPU Wrapper?
+
+Arduino UNO é 8 bits? como endereça 32kb de memória então?
+
+"Most 8 bit CPUs have 16 bit address buses allowing them to address 64kbytes,
+precisely because 256 bytes really isn't enough to do very much! It just means
+they need to load two bytes instead of one, each time they need to load an address.
+Slightly slower but tolerable considering their size."
