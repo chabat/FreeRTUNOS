@@ -9,7 +9,7 @@ void setup(){
   String portName = "/dev/ttyUSB0"; //Atribui o nome da porta
   port = new Serial(this, portName, 9600); //Cria o objeto Serial
   port.clear(); //Esvazia o buffer
-  output = createWriter("saida.csv");
+  output = createWriter("saida.txt");
 }
 
 void draw(){
@@ -19,6 +19,11 @@ void draw(){
       //print(str);  //Imprime a linha no terminal
       output.print(str); //Imprime a linha no arquivo
     }    
-  }
-  
+  } 
+}
+
+void keyPressed() {
+    output.flush();  // Escreve o resto dos dados no arquivo
+    output.close();  // Fecha o arquivo
+    exit();  // Termina a execução do programa
 }
