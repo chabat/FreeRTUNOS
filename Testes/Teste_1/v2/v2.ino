@@ -1,4 +1,5 @@
 #include <Arduino_FreeRTOS.h>
+#include <task.h>
  
 #define mainDELAY_LOOP_COUNT 112345 /* Usado como contador para o loop, para criar um delay */
 #define mainTASK_QUANTITY 5 /*Quantidade de tarefas a serem criadas*/
@@ -8,6 +9,7 @@ void vTarefa(void *pvParametros);
 
 void setup() {
   int iId;
+  TCB_t TCB;
   
   Serial.begin(9600); /* Define a taxa de bits por segundo para transmissão de dados */
   
@@ -25,13 +27,13 @@ void vTarefa(void *pvParametro){
   volatile unsigned long ul; /*Variável para o contador*/
   int iId = (int)pvParametro;
 
-  for( ;; ){ /* Tarefas são criadas em loops infinitos */
+  //for( ;; ){ /* Tarefas são criadas em loops infinitos */
     Serial.print("Tarefa "); /* Imprime a string */ 
     Serial.print(iId);
     Serial.print(" Executando\n");
     
     for(ul = 0; ul < mainDELAY_LOOP_COUNT; ul++); /* Implementação bruta de um atraso */ 
-  }
+  //}
 }
 
 void loop() {}

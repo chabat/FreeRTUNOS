@@ -12,3 +12,5 @@ Tamanho do TCB (Máximo e mínimo)
 
 -Ponteiro para o topo da pilha da tarefa: 2 bytes
 -MPU Wrapper: Provavelmente não usa, se usa: {BaseType_t xUsingStaticallyAllocatedStack; (1 byte) + xMPU_SETTINGS	xMPUSettings; (?) }
+-Funções do arduino não estão disponiveis dentro do código do FreeRTOS
+-
