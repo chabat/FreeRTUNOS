@@ -11,9 +11,25 @@ Parece que o tamanho de um ponteiro no arduino é 2 bytes, já que o sistema par
 Tamanho do TCB (Máximo e mínimo)
 
 - Ponteiro para o topo da pilha da tarefa: 2 bytes
+
 - MPU Wrapper: Provavelmente não usa, se usa: {BaseType_t xUsingStaticallyAllocatedStack; (1 byte) + xMPU_SETTINGS	xMPUSettings; (?) }
+
 - Funções do arduino não estão disponiveis dentro do código do FreeRTOS
+
 - Tentamos usar a header tasks.h, porém também não funcionou, não reconhecendo a estrutura TCB_t;
+
 - Se tentar colocar a estrutura de TCB_t no header das tarefas, também dá erro.
-- Usamos o processor para tentar ler, conseguimos, mas estamos com problema na leitura do serial, parece que ao terminar de escrever, permanece lá por quantas leituras forem possíveis,
-causando assim um "flood" da ultima mensagem escrita.
+
+- Usamos a linguagem processor para tentar ler. Conseguimos, mas estamos com problema na leitura do serial, parece que ao terminar de escrever, permanece lá por quantas
+leituras forem possíveis, causando assim um "flood" da ultima mensagem escrita.
+
+- Conseguimos fazer ler, agora é colocar a leitura num arquivo.
+
+- Conseguimos escrever a saída num arquivo.
+
+- Percebemos que a função vTaskDelete nao tinha retorno e alteramos para retornar o tamanho do TCB_t. Com isso, ao executar a função de criar e deletar uma tarefa,
+obtivemos como resposta um número e um conjunto de caracteres não identificados. O número que parece ser o tamanho do TCB_t é 41 bytes.
+com isso, percebe-se que para criar uma tarefa, usa-se o tamanho da pilha definido na função de criação da tarefa mais 41.
+Criando 4 tarefas com pilha de 200, foram usados 964 bytes.
+Ao dividir a pilha por 2 e tentar dobrar as tarefas, teríamos utilizado 1128 bytes.
+O que é estranho, pois ao compilar e dar upload para o arduino, temos como resposta que tem livre para variáveis locais 1676 bytes.
