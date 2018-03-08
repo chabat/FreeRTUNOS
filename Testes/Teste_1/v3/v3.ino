@@ -8,14 +8,19 @@
 void vTarefa(void *pvParametros);
 
 void setup() {
-  int iId;
-  
+  int iId, tcbSize = 0;
+  int i;
+  TaskHandle_t *handles[mainTASK_QUANTITY+1];
   Serial.begin(9600); /* Define a taxa de bits por segundo para transmissão de dados */
   
   for(iId = 1; iId <= mainTASK_QUANTITY; iId++){
-    xTaskCreate( vTarefa, "Tarefa", mainSTACK_DEPTH, (void*) iId, 1, NULL);
+    xTaskCreate( vTarefa, "Tarefa", mainSTACK_DEPTH, (void*) iId, 1, handles[iId]);
   }
-
+  for(i = 1; i <= mainTASK_QUANTITY; i++){
+    tcbSize = vTaskDelete(handles[i]);
+    Serial.println(tcbSize);
+  }
+  delay(3000);
   vTaskStartScheduler(); /* Inicia o escalonador */  
 
   Serial.print("E morreu\n");
