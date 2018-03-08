@@ -9,7 +9,6 @@ void vTarefa(void *pvParametros);
 
 void setup() {
   int iId;
-  TCB_t TCB;
   
   Serial.begin(9600); /* Define a taxa de bits por segundo para transmissão de dados */
   
