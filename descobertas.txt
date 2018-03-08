@@ -15,4 +15,5 @@ Tamanho do TCB (Máximo e mínimo)
 - Funções do arduino não estão disponiveis dentro do código do FreeRTOS
 - Tentamos usar a header tasks.h, porém também não funcionou, não reconhecendo a estrutura TCB_t;
 - Se tentar colocar a estrutura de TCB_t no header das tarefas, também dá erro.
-- 
+- Usamos o processor para tentar ler, conseguimos, mas estamos com problema na leitura do serial, parece que ao terminar de escrever, permanece lá por quantas leituras forem possíveis,
+causando assim um "flood" da ultima mensagem escrita.
