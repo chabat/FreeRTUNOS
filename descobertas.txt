@@ -33,3 +33,10 @@ com isso, percebe-se que para criar uma tarefa, usa-se o tamanho da pilha defini
 Criando 4 tarefas com pilha de 200, foram usados 964 bytes.
 Ao dividir a pilha por 2 e tentar dobrar as tarefas, teríamos utilizado 1128 bytes.
 O que é estranho, pois ao compilar e dar upload para o arduino, temos como resposta que tem livre para variáveis locais 1676 bytes.
+
+- Reorganizamos os nomes das pastas para condizer com os programas teste.
+
+- Começamos a testar a tarefa idle, porém, ao fazer um programa que deletava sua própria tarefa após executá-la uma vez,
+ela continuava executando por um período de tempo. Nossa dedução é que leva um tempo para a tarefa ser realmente deletada.
+
+- Não entendemos o que acontece caso a tarefa não tenha um laço principal, para onde ele retorna? é excluído?
