@@ -39,4 +39,4 @@ O que é estranho, pois ao compilar e dar upload para o arduino, temos como resp
 - Começamos a testar a tarefa idle, porém, ao fazer um programa que deletava sua própria tarefa após executá-la uma vez,
 ela continuava executando por um período de tempo. Nossa dedução é que leva um tempo para a tarefa ser realmente deletada.
 
-- Não entendemos o que acontece caso a tarefa não tenha um laço principal, para onde ele retorna? é excluído?
+- Não entendemos o que acontece caso a tarefa não tenha um laço principal, para onde ela retorna? é excluída?
