@@ -42,4 +42,4 @@ ela continuava executando por um período de tempo. Nossa dedução é que leva 
 - Não entendemos o que acontece caso a tarefa não tenha um laço principal, para onde ela retorna? é excluída?
 - Acreditamos ter resolvido o problema, era erro de código nosso.
 
-- Ao rodar o novo código, a tarefa 4 termina antes da tarefa 3. Porque?
+- Ao rodar o novo código, a tarefa 4 termina antes da tarefa 3. Porque??
