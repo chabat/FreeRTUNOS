@@ -1,3 +1,11 @@
+/*
+Programa de teste base do FreeRTOS no Arduino UNO,
+Apenas uma tarefa que imprime uma string com um contador
+e depois espera pelo fim de um tempo de delay.
+
+Authors: Felipe Chabatura Neto
+         Leonardo Tironi Fassini
+*/
 #include <Arduino_FreeRTOS.h>
 
 /* Usado como contador para o loop, para criar um delay */ 
