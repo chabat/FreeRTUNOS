@@ -58,3 +58,4 @@ Era suposto pra aguentar até 2^(16), mas ele trava com muito menos. Estamos ach
 - Adicionamos constantes para debugar.
 
 - O resultado da comparação é que ambos medem o tempo com similar precisão.
+.
