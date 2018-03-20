@@ -14,7 +14,7 @@ Authors: Felipe Chabatura Neto
 
 typedef struct{
   int iId;
-  TaskHandle_t *handle;
+  TaskHandle_t handle;
 }param_t;
 
 void vTarefa(void *pvParametros);
@@ -27,7 +27,7 @@ void setup() {
   
   for(i = 1; i <= mainTASK_QUANTITY; i++){
     parameters[i].iId = i;
-    xTaskCreate( vTarefa, "Tarefa", mainSTACK_DEPTH, (void*) &parameters[i], 1, parameters[i].handle);
+    xTaskCreate( vTarefa, "Tarefa", mainSTACK_DEPTH, (void*) &parameters[i], 1, &parameters[i].handle);
   }
 
   vTaskStartScheduler(); /* Inicia o escalonador */  
@@ -40,7 +40,7 @@ void vTarefa(void *pvParametro){
   volatile unsigned long ul; /*Variável para o contador*/
   param_t *parametro = (param_t*)pvParametro;
   int iId = parametro->iId, first = 1;
-  TaskHandle_t *handle = parametro->handle;
+  TaskHandle_t handle = parametro->handle;
 
   for( ;; ){ /* Tarefas são criadas em loops infinitos */
     for(ul = 0; ul < mainDELAY_LOOP_COUNT; ul++); /* Implementação bruta de um atraso */  
@@ -51,7 +51,7 @@ void vTarefa(void *pvParametro){
       Serial.print(" Executando\n");
     } 
     first = 0;   
-    vTaskDelete(*handle);
+    vTaskDelete(handle);
   }
 }
 
