@@ -1,5 +1,3 @@
-#Descobertas:
-
 
 Ao tentarmos diminuir a quantidade da stack pela metade, não foi possível dobrar a quantidade de tasks.
 O motivo era que ela cria um TCB (Task control block). Porém ainda não sabemos quanto de memória ele ocupa.
@@ -43,3 +41,20 @@ ela continuava executando por um período de tempo. Nossa dedução é que leva 
 - Acreditamos ter resolvido o problema, era erro de código nosso.
 
 - Ao rodar o novo código, a tarefa 4 termina antes da tarefa 3. Porque??
+
+- Descobrimos que em 100ms o arduino faz 6 ticks. Com 1000ms faz 62.
+
+- Fizemos um código em que pegamos o tempo inicial e final da tarefa através do xTaskGetTickCount() e dividimos por quantos ticks ele dá em um segundo e multiplicamos por 1000 para saber o tempo em milisegundos.
+
+- Estamos tentando construir uma string só para enviar para o serial.print e imprimir tudo de uma vez, porém nenhuma string está sendo atribuida, se essa string estiver na tarefa.
+
+- Não fomos bem sucedidos em imprimir em um serial.print apenas. Voltamos aos várias serial.prints.
+
+- Com 1 tarefa o tempo em média foi de 240 a 250ms. Com 2 o resultado foi o esperado: dobrou. Porém, as tarefas param de imprimir do nada. E não é só nesse caso.
+Era suposto pra aguentar até 2^(16), mas ele trava com muito menos. Estamos achando que é algum deadlock.
+
+- Vamos comparar o tempo do xTaskGetTickCount com o millis(), um é do FreeRTOS que guarda os ticks, e o outro do arduino que guarda os milisegundos desde que o programa iniciou.
+
+- Adicionamos constantes para debugar.
+
+- O resultado da comparação é que ambos medem o tempo com similar precisão.
