@@ -6,7 +6,7 @@ PrintWriter output; //"Ponteiro" para o arquivo de saída
 
 
 void setup(){
-  String portName = "/dev/ttyUSB0"; //Atribui o nome da porta
+  String portName = "/dev/ttyUSB1"; //Atribui o nome da porta
   port = new Serial(this, portName, 9600); //Cria o objeto Serial
   port.clear(); //Esvazia o buffer
   output = createWriter("saida.txt");
