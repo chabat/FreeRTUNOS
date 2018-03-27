@@ -18,8 +18,8 @@ void draw(){
     if(str != null){
       //print(str);  //Imprime a linha no terminal
       output.print(str); //Imprime a linha no arquivo
-    }    
-  } 
+    }
+  }
 }
 
 void keyPressed() {

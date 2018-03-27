@@ -62,3 +62,21 @@ Era suposto pra aguentar até 2^(16), mas ele trava com muito menos. Estamos ach
 - Fizemos uma função para a tarefa idle, que irá rodar depois das duas outras tarefas normais serem bloqueadas.
 
 - Ao testar como estava o rendimento da tarefa idle, fazendo um for que iria de 0 até 10^5, ele extrapolava esse valor, mas não saía do for.
+
+- Colocamos um tempo para a tarefa idle, do mesmo modo que estamos medindo o tempo de uma tarefa normal. Descobrimos que o mod é mais custoso do que pensávamos.
+
+- Junto de quatro tarefas com operações brutas e medidas de tempo, a tarefa idle demora de um a dois segundos para terminar sua iteração. A tarefa idle somente medirá o tempo.
+
+- Ao verificar o código da pilha da tarefa idle, encontramos que ela é definida pela variável tskIDLE_STACK_SIZE, que é definido por configIDLE_STACK_SIZE que é UBaseType_t 128, ou seja, 128 bytes.
+
+- Ao verificarmos o código do escalonador, percebemos que caso seja especificado que a tarefa idle tenha um handle, será passado um handle para a função que cria uma tarefa, isso faz com que
+seja possível recuperar esse handle através da função xTaskGetIdleTaskHandle();
+
+- Se tiver configurado para usar timers, será chamada uma função (xTimerCreateTimerTask) responsável por garantir a criação da infraestrutura (tarefa) responsável pelo gerenciamento dos timers.
+
+- O tamanho da pilha da tarefa de timer é definida por configTIMER_TASK_STACK_DEPTH que é definida por configMINIMAL_STACK_SIZE, que é 85 bytes.
+
+- Ao verificar se existe algum tipo de sobreposição (polimorfismo) na função vApplication idle hook, encontramos que a tarefa chama outra função de loop e verifica se existe algo para ler na entrada serial,
+ele irá lê-la, mas não entendemos se essa sobreposição de função existe ou não.
+
+- mtCOVERAGE_TEST_MARKER: É usado para perceber quando o código não entra em um if, ao invés de somente parar por ali e seguir o código, ele cai nessa função e assim podemos ver que o programa tomou esse caminho.
