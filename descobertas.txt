@@ -79,4 +79,4 @@ seja possível recuperar esse handle através da função xTaskGetIdleTaskHandle
 - Ao verificar se existe algum tipo de sobreposição (polimorfismo) na função vApplication idle hook, encontramos que a tarefa chama outra função de loop e verifica se existe algo para ler na entrada serial,
 ele irá lê-la, mas não entendemos se essa sobreposição de função existe ou não.
 
-- mtCOVERAGE_TEST_MARKER: É usado para perceber quando o código não entra em um if, ao invés de somente parar por ali e seguir o código, ele cai nessa função e assim podemos ver que o programa tomou esse caminho.
+- mtCOVERAGE_TEST_MARKER(): É definido como nada. Usado para perceber quando o código não entra em um if, ao invés de somente parar por ali e seguir o código, ele cai nessa função e assim podemos ver que o programa tomou esse caminho.
