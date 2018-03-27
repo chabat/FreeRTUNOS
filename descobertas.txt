@@ -58,4 +58,7 @@ Era suposto pra aguentar até 2^(16), mas ele trava com muito menos. Estamos ach
 - Adicionamos constantes para debugar.
 
 - O resultado da comparação é que ambos medem o tempo com similar precisão.
-.
+
+- Fizemos uma função para a tarefa idle, que irá rodar depois das duas outras tarefas normais serem bloqueadas.
+
+- Ao testar como estava o rendimento da tarefa idle, fazendo um for que iria de 0 até 10^5, ele extrapolava esse valor, mas não saía do for.
