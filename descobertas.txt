@@ -70,3 +70,4 @@ TABELA DE USO DE MEMÓRIA:
 Espaço que um código vazio do arduino ocupa: 9 bytes da memória RAM.
 Espaço que a biblioteca do FreeRTOS ocupa: 150 bytes da memória RAM.
 Espaço que a função serial.X ocupa: 175 bytes da memória RAM.
+Espaço que o TCB_t ocupa: 41 bytes da memória RAM. (sem modificar as variáveis de controle).
