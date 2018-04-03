@@ -1,10 +1,10 @@
 
 Ao tentarmos diminuir a quantidade da stack pela metade, não foi possível dobrar a quantidade de tasks.
-O motivo era que ela cria um TCB (Task control block). Porém ainda não sabemos quanto de memória ele ocupa.
+O motivo era que ela cria um TCB (Task control block).
 
 Aparentemente dentro do arquivo fonte do freertos no arduino, a tasks.c não permite usar fopen.
 
-Parece que o tamanho de um ponteiro no arduino é 2 bytes, já que o sistema parece ter 16bits.
+O tamanho de um ponteiro no arduino é 2 bytes, já que o sistema parece ter 16bits.
 
 Tamanho do TCB (Máximo e mínimo)
 
@@ -16,14 +16,8 @@ Tamanho do TCB (Máximo e mínimo)
 
 - Tentamos usar a header tasks.h, porém também não funcionou, não reconhecendo a estrutura TCB_t;
 
-- Se tentar colocar a estrutura de TCB_t no header das tarefas, também dá erro.
-
-- Usamos a linguagem processor para tentar ler. Conseguimos, mas estamos com problema na leitura do serial, parece que ao terminar de escrever, permanece lá por quantas
+- Usamos a linguagem processor para tentar ler. Parece que ao terminar de escrever, permanece lá por quantas
 leituras forem possíveis, causando assim um "flood" da ultima mensagem escrita.
-
-- Conseguimos fazer ler, agora é colocar a leitura num arquivo.
-
-- Conseguimos escrever a saída num arquivo.
 
 - Percebemos que a função vTaskDelete nao tinha retorno e alteramos para retornar o tamanho do TCB_t. Com isso, ao executar a função de criar e deletar uma tarefa,
 obtivemos como resposta um número e um conjunto de caracteres não identificados. O número que parece ser o tamanho do TCB_t é 41 bytes.
@@ -32,13 +26,8 @@ Criando 4 tarefas com pilha de 200, foram usados 964 bytes.
 Ao dividir a pilha por 2 e tentar dobrar as tarefas, teríamos utilizado 1128 bytes.
 O que é estranho, pois ao compilar e dar upload para o arduino, temos como resposta que tem livre para variáveis locais 1676 bytes.
 
-- Reorganizamos os nomes das pastas para condizer com os programas teste.
-
 - Começamos a testar a tarefa idle, porém, ao fazer um programa que deletava sua própria tarefa após executá-la uma vez,
 ela continuava executando por um período de tempo. Nossa dedução é que leva um tempo para a tarefa ser realmente deletada.
-
-- Não entendemos o que acontece caso a tarefa não tenha um laço principal, para onde ela retorna? é excluída?
-- Acreditamos ter resolvido o problema, era erro de código nosso.
 
 - Ao rodar o novo código, a tarefa 4 termina antes da tarefa 3. Porque??
 
@@ -46,28 +35,22 @@ ela continuava executando por um período de tempo. Nossa dedução é que leva 
 
 - Fizemos um código em que pegamos o tempo inicial e final da tarefa através do xTaskGetTickCount() e dividimos por quantos ticks ele dá em um segundo e multiplicamos por 1000 para saber o tempo em milisegundos.
 
-- Estamos tentando construir uma string só para enviar para o serial.print e imprimir tudo de uma vez, porém nenhuma string está sendo atribuida, se essa string estiver na tarefa.
-
-- Não fomos bem sucedidos em imprimir em um serial.print apenas. Voltamos aos várias serial.prints.
-
 - Com 1 tarefa o tempo em média foi de 240 a 250ms. Com 2 o resultado foi o esperado: dobrou. Porém, as tarefas param de imprimir do nada. E não é só nesse caso.
 Era suposto pra aguentar até 2^(16), mas ele trava com muito menos. Estamos achando que é algum deadlock.
 
 - Vamos comparar o tempo do xTaskGetTickCount com o millis(), um é do FreeRTOS que guarda os ticks, e o outro do arduino que guarda os milisegundos desde que o programa iniciou.
 
-- Adicionamos constantes para debugar.
+- Adicionamos constantes para debugar, mainUSE_FREERTOS_TICK_COUNT. Se ela tiver declarada usa o relógio do FreeRTOS, se não, usa o do arduino.
 
 - O resultado da comparação é que ambos medem o tempo com similar precisão.
 
-- Fizemos uma função para a tarefa idle, que irá rodar depois das duas outras tarefas normais serem bloqueadas.
-
 - Ao testar como estava o rendimento da tarefa idle, fazendo um for que iria de 0 até 10^5, ele extrapolava esse valor, mas não saía do for.
-
-- Colocamos um tempo para a tarefa idle, do mesmo modo que estamos medindo o tempo de uma tarefa normal. Descobrimos que o mod é mais custoso do que pensávamos.
 
 - Junto de quatro tarefas com operações brutas e medidas de tempo, a tarefa idle demora de um a dois segundos para terminar sua iteração. A tarefa idle somente medirá o tempo.
 
 - Ao verificar o código da pilha da tarefa idle, encontramos que ela é definida pela variável tskIDLE_STACK_SIZE, que é definido por configIDLE_STACK_SIZE que é UBaseType_t 128, ou seja, 128 bytes.
+
+ESCALONADOR:
 
 - Ao verificarmos o código do escalonador, percebemos que caso seja especificado que a tarefa idle tenha um handle, será passado um handle para a função que cria uma tarefa, isso faz com que
 seja possível recuperar esse handle através da função xTaskGetIdleTaskHandle();
@@ -80,3 +63,10 @@ seja possível recuperar esse handle através da função xTaskGetIdleTaskHandle
 ele irá lê-la, mas não entendemos se essa sobreposição de função existe ou não.
 
 - mtCOVERAGE_TEST_MARKER(): É definido como nada. Usado para perceber quando o código não entra em um if, ao invés de somente parar por ali e seguir o código, ele cai nessa função e assim podemos ver que o programa tomou esse caminho.
+
+
+TABELA DE USO DE MEMÓRIA:
+
+Espaço que um código vazio do arduino ocupa: 9 bytes da memória RAM.
+Espaço que a biblioteca do FreeRTOS ocupa: 150 bytes da memória RAM.
+Espaço que a função serial.X ocupa: 175 bytes da memória RAM.
