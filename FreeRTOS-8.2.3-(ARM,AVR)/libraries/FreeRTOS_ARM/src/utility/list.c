@@ -79,7 +79,7 @@
 void vListInitialise( List_t * const pxList )
 {
 	/* The list structure contains a list item which is used to mark the
-	end of the list.  To initialise the list the list end is inserted
+	end of the list.  To initialise the list, the list end is inserted
 	as the only list entry. */
 	pxList->pxIndex = ( ListItem_t * ) &( pxList->xListEnd );			/*lint !e826 !e740 The mini list structure is used as the list end to save RAM.  This is checked and valid. */
 
@@ -237,4 +237,3 @@ List_t * const pxList = ( List_t * ) pxItemToRemove->pvContainer;
 	return pxList->uxNumberOfItems;
 }
 /*-----------------------------------------------------------*/
-

@@ -1559,14 +1559,15 @@ BaseType_t xReturn;
 	}
 	#endif /* INCLUDE_xTaskGetIdleTaskHandle */
 
-	#if ( configUSE_TIMERS == 1 )
+	#if ( configUSE_TIMERS == 1 ) //Se a constante para usar timers está setada para 1
 	{
-		if( xReturn == pdPASS )
+		if( xReturn == pdPASS ) //E A tarefa idle foi criada com sucesso
 		{
-			xReturn = xTimerCreateTimerTask();
+			xReturn = xTimerCreateTimerTask(); //Cria tarefa de timers
 		}
 		else
 		{
+			//Caso algo tenha dado errado
 			mtCOVERAGE_TEST_MARKER();
 		}
 	}
