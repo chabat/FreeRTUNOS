@@ -65,6 +65,10 @@ ele irá lê-la, mas não entendemos se essa sobreposição de função existe o
 
 - A definição de UBaseType_t é Unsigned long.
 
+- Ao criar a tarefa, se ela for criada em modo de privilegiado, o bit mais significativo de UBaseType_t é usado para indicar que ele está nesse modo.
+
+-
+
 TABELA DE USO DE MEMÓRIA:
 
 Espaço que um código vazio do arduino ocupa: 9 bytes da memória RAM.

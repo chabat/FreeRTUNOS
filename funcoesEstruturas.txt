@@ -1,0 +1,12 @@
+List_t{
+  listFIRST_INTEGRITY_CHECK_VALUE:{
+    configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES: Existe uma definição dela, que é
+    usada para fazer uma verificação básica de corrupção de dados, que caso ela
+    não esteja definida, será definida como 0.
+  } Setado para um valor conhecido se a definição acima é 1.
+  configLIST_VOLATILE{
+    Se não tá definido, defina. Isso serve para evitar que o compilador remova trechos de cógido onde poderia dar erro no escalonador.
+    Usado para evitar a otimização onde essa variável é usada.
+  }uxNumberOfItems: quantos itens tem na fila.
+
+}
