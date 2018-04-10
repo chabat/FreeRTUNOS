@@ -35,6 +35,7 @@ void vTarefa(void *pvParametros){
   /* Tarefas são criadas em loops infinitos */
   for( ;; ){
     /* Imprime a string */
+    Serial.print(sizeof(UBaseType_t));
     Serial.print(pcString);
     Serial.println(count++); 
     //vPrintString(pcString);

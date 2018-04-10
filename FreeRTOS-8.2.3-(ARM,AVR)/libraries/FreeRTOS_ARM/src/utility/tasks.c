@@ -1540,12 +1540,13 @@ StackType_t *pxTopOfStack;
 #endif /* ( ( INCLUDE_xTaskResumeFromISR == 1 ) && ( INCLUDE_vTaskSuspend == 1 ) ) */
 /*-----------------------------------------------------------*/
 
+//Função que inicia o escalonador
 void vTaskStartScheduler( void )
 {
 BaseType_t xReturn;
 
 	/* Add the idle task at the lowest priority. */
-	#if ( INCLUDE_xTaskGetIdleTaskHandle == 1 )
+	#if ( INCLUDE_xTaskGetIdleTaskHandle == 1 ) //Cria idle task guardando o handle ou não (128 bytes de pilha)
 	{
 		/* Create the idle task, storing its handle in xIdleTaskHandle so it can
 		be returned by the xTaskGetIdleTaskHandle() function. */
