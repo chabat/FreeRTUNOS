@@ -10,3 +10,27 @@ List_t{
   }uxNumberOfItems: quantos itens tem na fila.
 
 }
+
+(Tasks.c) VtaskStartScheduler{
+   Cria a tarefa idle guardando ou não o valor dela, de acordo com a constante INCLUDE_xTaskGetIdleHandle.
+   xTaskCreate();
+
+}
+
+(tasks.c) XtaskCreate{ Definida como XtaskGenericCreate,
+   ConfigAssert():{ O primeiro irá verificar se o ponteiro não é nulo. O segundo provavelmente é para verificar
+   se a prioridade da tarefa a ser criada é menor que a maior prioridade possível. É usado um bitwise and com a
+   constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
+   }
+   prvAllocateTCBAndStack():
+}
+
+(FreeRTOS.h) ConfigAssert{ Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
+a debugação, pois indica o arquivo e a linha do erro.
+}
+
+(tasks.c) prvAllocateTCBAndStack{
+   Se a pilha cresce para baixo, então aloca a pilha depois o tcb. Caso contrário aloca o tcb depois a pilha.
+   No nosso caso, a pilha cresce pra baixo.
+
+}
