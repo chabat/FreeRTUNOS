@@ -15,6 +15,4 @@ precisely because 256 bytes really isn't enough to do very much! It just means
 they need to load two bytes instead of one, each time they need to load an address.
 Slightly slower but tolerable considering their size."
 
-BaseType_t é 1 byte? o que ele é?
-
-O que são as xListItemIntegrityValue1 e 2 ? 
+Se a pilha cresce para baixo, então aloca a pilha depois o tcb. Caso contrário aloca o tcb depois a pilha. Porque?

@@ -1,4 +1,6 @@
-List_t{
+#### ESTRUTURAS:
+
+(list.h) List_t{
   listFIRST_INTEGRITY_CHECK_VALUE:{
     configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES: Existe uma definição dela, que é
     usada para fazer uma verificação básica de corrupção de dados, que caso ela
@@ -11,6 +13,61 @@ List_t{
 
 }
 
+(tasks.c) TCB_t(tskTCB){
+  volatile stackType_t pxTopOfStack{ Ponteiro para a localização do ultimo item colocado na pilha da tarefa. }
+  portUSING_MPU_WRAPPERS { Usado para a proteção da memória, porém no arduino não é utilizada. Se fosse definido as xMPU_SETTINGS deveriam ser
+  definidas como parte da port layer, e teria uma flag que diria se a pilha foi alocada dinâmicamente ou estaticamente.
+  }
+  ListItem_t xGenericListItem{ É o que define o estado da tarefa. Se a lista que referencia esse item é a lista de pronto, então ele está pronto
+  para ir para o escalonador. }
+  ListItem_t xEventListItem { Usado para refenciar uma tarefa a partir de uma lista de eventos. }
+  UBaseType_t uxPriority { Prioridade. 0 é a mais baixa. }
+  StackType_t *pxStack{ Aponta para o começo da pilha. }
+  char pcTaskName[ configMAX_TASK_NAME_LEN ] { Nome descritivo da tarefa, tem no máximo tamanho 8(pode mudar conforme FreeRTOSConfig.h) }
+  StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha. }
+  UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
+  guardar esse valor. }
+  UBaseType_t uxTCBNumber {}
+  UBaseType_t uxTaskNumber {}
+
+}
+
+(list.h) ListItem_t(xLIST_ITEM){
+  listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE { Não é intencionado para ser usado pela aplicação, mas sim para testes dos desenvolvedores
+  do FreeRTOS. }
+  configLIST_VOLATILE{ Já Definido (7). } TickType_t xItemValue { É o valor sendo listado, em muitos casos usado para ordenar a
+  lista em ordem decrescente.
+  }
+  xLIST_ITEM *configLIST_VOLATILE pxNext{ Ponteiro para o proximo listItem_t na lista. }
+  xLIST_ITEM *configLIST_VOLATILE pxPrevious { Ponteiro para o anterior listItem_t na lista. }
+  void *pvOwner { Ponteiro para o objento (normalmente o TCB) que contém esse item. }
+  void *configLIST_VOLATILE pvContainer{ Ponteiro para a lista no qual este item está colocado, se existir. }
+  listSECOND_LIST_ITEM _INTEGRITY_CHECK_VALUE {Já Definido (29)}
+}
+
+#### TIPOS:
+
+(portmacro.h) StackType_t(portSTACK_TYPE){ é um uint8_t
+}
+
+(portmacro.h) uint32_t{ Unsigned long. 4 bytes .
+}
+
+(portmacro.h) uint16_t{ Unsigned short. 2 bytes.
+}
+
+(portmacro.h) uint8_t{ Unsigned char. 1 byte.
+}
+
+(portmacro.h) UBaseType_t{ Unsigned char de valor 1 byte.
+}
+
+(portmacro.h) TickType_t{ É um uint16_t ou um uint32_t dependendo da definição de conigUSE_16_BIT_TICKS, que nosso caso é 1, então é um uint16_t .
+}
+
+
+#### FUNÇÕES:
+
 (Tasks.c) VtaskStartScheduler{
    Cria a tarefa idle guardando ou não o valor dela, de acordo com a constante INCLUDE_xTaskGetIdleHandle.
    xTaskCreate();
@@ -22,7 +79,7 @@ List_t{
    se a prioridade da tarefa a ser criada é menor que a maior prioridade possível. É usado um bitwise and com a
    constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
    }
-   prvAllocateTCBAndStack():
+   prvAllocateTCBAndStack() { }
 }
 
 (FreeRTOS.h) ConfigAssert{ Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
@@ -30,7 +87,7 @@ a debugação, pois indica o arquivo e a linha do erro.
 }
 
 (tasks.c) prvAllocateTCBAndStack{
-   Se a pilha cresce para baixo, então aloca a pilha depois o tcb. Caso contrário aloca o tcb depois a pilha.
+   Se a pilha (portSTACK_GROWTH) cresce para baixo( < 0), então aloca a pilha depois o tcb. Caso contrário (> 0) aloca o tcb depois a pilha.
    No nosso caso, a pilha cresce pra baixo.
-
+   TCB_t
 }
