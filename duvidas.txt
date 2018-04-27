@@ -16,3 +16,7 @@ they need to load two bytes instead of one, each time they need to load an addre
 Slightly slower but tolerable considering their size."
 
 Se a pilha cresce para baixo, então aloca a pilha depois o tcb. Caso contrário aloca o tcb depois a pilha. Porque?
+
+Como funciona, o que é e para que servem o trace/ing.
+
+O que é a newlib? o que ela faz?
