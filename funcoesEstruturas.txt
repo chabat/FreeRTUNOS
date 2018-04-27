@@ -27,7 +27,8 @@
   StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha. }
   UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
   guardar esse valor. }
-  UBaseType_t uxTCBNumber {}
+  configUSE_TRACE_FACILITY{ Grava a sequencia em que as tarefas recebem o tempo de processamento do microprocessador. }
+  UBaseType_t uxTCBNumber { }
   UBaseType_t uxTaskNumber {}
 
 }
