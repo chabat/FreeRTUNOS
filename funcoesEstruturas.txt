@@ -14,87 +14,87 @@
 }
 
 (tasks.c) TCB_t(tskTCB){
-  volatile stackType_t pxTopOfStack{ Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
+  (1B) volatile stackType_t pxTopOfStack{ Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
   }
   #ND(0) portUSING_MPU_WRAPPERS { Usado para a proteção da memória, porém no arduino não é utilizada. Se fosse definido as xMPU_SETTINGS deveriam ser
   definidas como parte da port layer, e teria uma flag que diria se a pilha foi alocada dinâmicamente ou estaticamente.
   }
-  ListItem_t xGenericListItem{ É o que define o estado da tarefa. Se a lista que referencia esse item é a lista de pronto, então ele está pronto
+  (10B) ListItem_t xGenericListItem{ É o que define o estado da tarefa. Se a lista que referencia esse item é a lista de pronto, então ele está pronto
   para ir para o escalonador.
   }
-  ListItem_t xEventListItem { Usado para refenciar uma tarefa a partir de uma lista de eventos.
+  (10B) ListItem_t xEventListItem { Usado para refenciar uma tarefa a partir de uma lista de eventos.
   }
-  UBaseType_t uxPriority { Prioridade. 0 é a mais baixa.
+  (1B) UBaseType_t uxPriority { Prioridade. 0 é a mais baixa.
   }
-  StackType_t *pxStack{ Aponta para o começo da pilha.
+  (1B) StackType_t *pxStack{ Aponta para o começo da pilha.
   }
   #-1 portSTACK_GROWTH { Já definido
   }
-  char pcTaskName[ configMAX_TASK_NAME_LEN ] { Nome descritivo da tarefa, tem no máximo tamanho 8(pode mudar conforme FreeRTOSConfig.h)
+  (8B) char pcTaskName[ configMAX_TASK_NAME_LEN ] { Nome descritivo da tarefa, tem no máximo tamanho 8(pode mudar conforme FreeRTOSConfig.h)
   }
-  StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha.
+  (1B) StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha.
   }
   #ND(0) portCRITICAL_NESTING_IN_TCB{ definição que pertimirá ou não o critical nesting.
-  }
-  UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
-  guardar esse valor.volatile
+    (1B) UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
+    guardar esse valor.volatile
+    }
   }
   #0 configUSE_TRACE_FACILITY{ Grava a sequencia em que as tarefas recebem o tempo de processamento do microprocessador.
-  }
-  UBaseType_t uxTCBNumber { Contador de quantidade de vezes que TCBs foram criados. Serve para ajudar debuggers para saber quando uma tarefa foi
-  deletada e recriada.
-  }
-  UBaseType_t uxTaskNumber { Numero utilizado por códigos de rastro (trace) de terceiros.
+    1(B) UBaseType_t uxTCBNumber { Contador de quantidade de vezes que TCBs foram criados. Serve para ajudar debuggers para saber quando uma tarefa foi
+    deletada e recriada.
+    }
+    (1B) UBaseType_t uxTaskNumber { Numero utilizado por códigos de rastro (trace) de terceiros.
+    }
   }
   #1 configUSE_MUTEXES{ Caso o uso de mutexes esteja ligado.
-  }
-  UBaseType_t uxBasePriority{ a ultima prioridade atribuida a tarefa. Usado pelo mecanismo de herança de prioridades.
-  }
-  UBaseType_t uxMutexesHeld{ Numero de mutexes que a tarefa está segurando (não temos certeza, entretanto).
+    (1B) UBaseType_t uxBasePriority{ a ultima prioridade atribuida a tarefa. Usado pelo mecanismo de herança de prioridades.
+    }
+    (1B) UBaseType_t uxMutexesHeld{ Numero de mutexes que a tarefa está segurando (não temos certeza, entretanto).
+    }
   }
   #ND(0) configUSE_APPLICATION_TASK_TAG{ Habilita ou não o uso de valores de tag para uma tarefa. Tag é um valor que pode ser atribuido a cada
   tarefa e pode ser usado pela aplicação para macros de tracing. O kernel não utiliza esse recurso. Esse valor pode ser qualquer coisa,
   até uma função de callback.
-  }
-  TaskHookFunction_t pxTaskTag{ valor dado a tag da tarefa.
+    TaskHookFunction_t pxTaskTag{ valor dado a tag da tarefa.
+    }
   }
   #ND(0) configNUM_THREAD_LOCAL_STORAGE_POINTERS{ Usado para guardar um valor dentro do TCB. Esse valor é específico da thread em questão. Alternativa
   para alguns casos de variáveis globais em ambientes multithreads.
-  }
-  void *pvThreadLocalStoragePointers[ configNUM_THREAD_LOCAL_STORAGE_POINTERS]{ array de ponteiros para void, usado para guardar valores.
-  possui uma função específica para definir e ler um valor no array de ponteiros (vTastkSetThreadLocalStoragePointer() e
-  pvTastkGetThreadLocalStoragePointer()).
+    (2B) void *pvThreadLocalStoragePointers[ configNUM_THREAD_LOCAL_STORAGE_POINTERS]{ array de ponteiros para void, usado para guardar valores.
+    possui uma função específica para definir e ler um valor no array de ponteiros (vTastkSetThreadLocalStoragePointer() e
+    pvTastkGetThreadLocalStoragePointer()).
+    }
   }
   #ND(0) configGENERATE_RUN_TIME_STATS{ usado para coletar informações acerca do uso do processamento que foi usado por cada tarefa (tempo absoluto e percentual).
   A função vTaskGetRunTimeStats() é usada para mostrar essas informações em um formato tabular.
-  }
-  uint32_t ulRunTimeCounter{ Quantidade de tempo que a tarefa passou no estado running.
+    (4B) uint32_t ulRunTimeCounter{ Quantidade de tempo que a tarefa passou no estado running.
+    }
   }
   #ND(0) configUSE_NEWLIB_REENTRANT{ Habilita o uso de uma biblioteca popular para sistemas embarcados (NewLib). #ND.
-  }
-  struct _reent xNewlib_reent{ Aparentemente não está definido em lugar algum. Portanto o dono da aplicação deve definir essa estrutura.
+    (0B) struct _reent xNewlib_reent{ Aparentemente não está definido em lugar algum. Portanto o dono da aplicação deve definir essa estrutura.
+    }
   }
   #ND(1) configUSE_TASK_NOTIFICATIONS{ Definido caso a funcionalidade de notificações diretas das tarefas deseja ser usada. Cada tarefa consome 8 bytes adicionais
   de RAM quando essa funcionalidade está incluida (Conferir se no arduino AVR é 8bytes mesmo).
-  }
-  volatile uint32_t ulNotifiedValue{ Variável que armazenará os valores das notificações.
-  }
-  volatile eNotifyValue eNotifyState{ Variável que guarda o estado da notificação.
+    (4B) volatile uint32_t ulNotifiedValue{ Variável que armazenará os valores das notificações.
+    }
+    volatile eNotifyValue eNotifyState{ Variável que guarda o estado da notificação.
+    }
   }
 }
 
 (list.h) ListItem_t(xLIST_ITEM){
   listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE { Não é intencionado para ser usado pela aplicação, mas sim para testes dos desenvolvedores
   do FreeRTOS. }
-  configLIST_VOLATILE{ Já Definido. } TickType_t xItemValue { É o valor sendo listado, em muitos casos usado para ordenar a
+  (2B) configLIST_VOLATILE{ Já Definido. } TickType_t xItemValue { É o valor sendo listado, em muitos casos usado para ordenar a
   lista em ordem decrescente.
   }
-  xLIST_ITEM *configLIST_VOLATILE pxNext{ Ponteiro para o proximo listItem_t na lista. }
-  xLIST_ITEM *configLIST_VOLATILE pxPrevious { Ponteiro para o anterior listItem_t na lista. }
-  void *pvOwner { Ponteiro para o objento (normalmente o TCB) que contém esse item. }
-  void *configLIST_VOLATILE pvContainer{ Ponteiro para a lista no qual este item está colocado, se existir. }
+  (2B) xLIST_ITEM *configLIST_VOLATILE pxNext{ Ponteiro para o proximo listItem_t na lista. }
+  (2B) xLIST_ITEM *configLIST_VOLATILE pxPrevious { Ponteiro para o anterior listItem_t na lista. }
+  (2B) void *pvOwner { Ponteiro para o objento (normalmente o TCB) que contém esse item. }
+  (2B) void *configLIST_VOLATILE pvContainer{ Ponteiro para a lista no qual este item está colocado, se existir. }
   listSECOND_LIST_ITEM _INTEGRITY_CHECK_VALUE {Já Definido }
-}
+} (10B)
 
 (tasks.c) eNotifyValue{ é um enumerador, onde
   eNotWaitingNotification é 0
@@ -119,9 +119,10 @@
 (portmacro.h) UBaseType_t{ Unsigned char de valor 1 byte.
 }
 
-(portmacro.h) TickType_t{ É um uint16_t ou um uint32_t dependendo da definição de conigUSE_16_BIT_TICKS, que nosso caso é 1, então é um uint16_t .
+(portmacro.h) TickType_t{ É um uint16_t ou um uint32_t dependendo da definição de configUSE_16_BIT_TICKS, que nosso caso é 1, então é um uint16_t .
 }
 
+*O tamanho de um ponteiro no arduino é de 2 Bytes.
 
 #### FUNÇÕES:
 
