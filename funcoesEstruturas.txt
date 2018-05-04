@@ -14,7 +14,7 @@
 }
 
 (tasks.c) TCB_t(tskTCB){
-  (1B) volatile stackType_t pxTopOfStack{ Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
+  (2B) volatile stackType_t pxTopOfStack{ Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
   }
   #ND(0) portUSING_MPU_WRAPPERS { Usado para a proteção da memória, porém no arduino não é utilizada. Se fosse definido as xMPU_SETTINGS deveriam ser
   definidas como parte da port layer, e teria uma flag que diria se a pilha foi alocada dinâmicamente ou estaticamente.
@@ -26,13 +26,13 @@
   }
   (1B) UBaseType_t uxPriority { Prioridade. 0 é a mais baixa.
   }
-  (1B) StackType_t *pxStack{ Aponta para o começo da pilha.
-  }
-  #-1 portSTACK_GROWTH { Já definido
+  (2B) StackType_t *pxStack{ Aponta para o começo da pilha.
   }
   (8B) char pcTaskName[ configMAX_TASK_NAME_LEN ] { Nome descritivo da tarefa, tem no máximo tamanho 8(pode mudar conforme FreeRTOSConfig.h)
   }
-  (1B) StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha.
+  #-1 portSTACK_GROWTH { Já definido
+    (2B) StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha.
+    }
   }
   #ND(0) portCRITICAL_NESTING_IN_TCB{ definição que pertimirá ou não o critical nesting.
     (1B) UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
@@ -40,7 +40,7 @@
     }
   }
   #0 configUSE_TRACE_FACILITY{ Grava a sequencia em que as tarefas recebem o tempo de processamento do microprocessador.
-    1(B) UBaseType_t uxTCBNumber { Contador de quantidade de vezes que TCBs foram criados. Serve para ajudar debuggers para saber quando uma tarefa foi
+    (1B) UBaseType_t uxTCBNumber { Contador de quantidade de vezes que TCBs foram criados. Serve para ajudar debuggers para saber quando uma tarefa foi
     deletada e recriada.
     }
     (1B) UBaseType_t uxTaskNumber { Numero utilizado por códigos de rastro (trace) de terceiros.
@@ -55,7 +55,8 @@
   #ND(0) configUSE_APPLICATION_TASK_TAG{ Habilita ou não o uso de valores de tag para uma tarefa. Tag é um valor que pode ser atribuido a cada
   tarefa e pode ser usado pela aplicação para macros de tracing. O kernel não utiliza esse recurso. Esse valor pode ser qualquer coisa,
   até uma função de callback.
-    TaskHookFunction_t pxTaskTag{ valor dado a tag da tarefa.
+    (1B) TaskHookFunction_t { é uma variável que recebe um valor, passado por parametro como ponteiro para void, mas que é do tipo BaseType_t.
+    o parâmetro pode ser usado para passar qualquer valor para a função. } pxTaskTag{ valor dado a tag da tarefa.
     }
   }
   #ND(0) configNUM_THREAD_LOCAL_STORAGE_POINTERS{ Usado para guardar um valor dentro do TCB. Esse valor é específico da thread em questão. Alternativa
@@ -78,7 +79,7 @@
   de RAM quando essa funcionalidade está incluida (Conferir se no arduino AVR é 8bytes mesmo).
     (4B) volatile uint32_t ulNotifiedValue{ Variável que armazenará os valores das notificações.
     }
-    volatile eNotifyValue eNotifyState{ Variável que guarda o estado da notificação.
+    (2B) volatile eNotifyValue eNotifyState{ Variável que guarda o estado da notificação.
     }
   }
 }

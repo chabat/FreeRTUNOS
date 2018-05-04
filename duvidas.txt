@@ -20,3 +20,9 @@ Se a pilha cresce para baixo, então aloca a pilha depois o tcb. Caso contrário
 Como funciona, o que é e para que servem o trace/ing.
 
 O que é a newlib? o que ela faz?
+
+O arduino uno tem um microcontrolador de 8 bits, então como ele consegue endereçar 16 bits? como ele faz isso?
+
+No FreeRTOS na pasta utility tem alguns arquivos que na pasta que surgiu quando o FreeRTOS foi instalado, não tem.
+
+O que é o stdint.h? Ele preve o necessário para o freeRTOS ser construido, mas precisaria estar na pasta e ser renomeado para stdint.h.
