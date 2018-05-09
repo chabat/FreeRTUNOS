@@ -147,6 +147,8 @@ a debugação, pois indica o arquivo e a linha do erro.
 
 (tasks.c) prvAllocateTCBAndStack{
    Se a pilha (portSTACK_GROWTH) cresce para baixo( < 0), então aloca a pilha depois o tcb. Caso contrário (> 0) aloca o tcb depois a pilha.
-   No nosso caso, a pilha cresce pra baixo.
-   TCB_t
+   No nosso caso, a pilha cresce pra baixo. Nesse caso não faz muita diferença, uma vez que tudo é controlado pelo próprio malloc. Porém em outras
+   arquiteturas, isso deve ser considerado.
+   }
+
 }
