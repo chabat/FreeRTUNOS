@@ -26,3 +26,7 @@ O arduino uno tem um microcontrolador de 8 bits, então como ele consegue endere
 No FreeRTOS na pasta utility tem alguns arquivos que na pasta que surgiu quando o FreeRTOS foi instalado, não tem.
 
 O que é o stdint.h? Ele preve o necessário para o freeRTOS ser construido, mas precisaria estar na pasta e ser renomeado para stdint.h.
+
+O que é o pxCurrentTimerList e o pxOverflowTimerList?
+
+O que é uma Queue storage área, e porque ele ainda cria uma queue se o tamanho de cada item for 0?

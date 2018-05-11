@@ -1,0 +1,6 @@
+xTimerCreateTimerTask, que vai criar o timer da tarefa. Vai verificar se a fila
+já foi criada, caso contrário cria ela, mas para isso antes ele inicia uma fila de timers,
+que são guardados em ordem de qual vai expirar mais cedo.
+Porém para criar a fila de timers, ele usa uma estrutura chamada Queue_t (que é ainda usada como
+a definição antiga, xQUEUE, por motivos de debug).
+Agora estou olhando a xQueueCreate.
