@@ -4,3 +4,24 @@ que são guardados em ordem de qual vai expirar mais cedo.
 Porém para criar a fila de timers, ele usa uma estrutura chamada Queue_t (que é ainda usada como
 a definição antiga, xQUEUE, por motivos de debug).
 Agora estou olhando a xQueueCreate.
+
+
+StartScheduler ->
+  xTaskCreate ->
+    xTaskGenericCreate->
+    (portmacro.h) MemoryRegion_t (xMemoryRegion){
+      void *pvBaseAddress {Ponteiro para o endereço base da região de memória.}
+      uint32_t ulLengthInBytes {Comprimento em bytes}
+      uint32_t ulParameters {Define como a tarefa é permitida acessa a região da memória, e pode receber um OR bit a bit dos seguintes valores:
+        portMPU_REGION_READ_WRITE
+        portMPU_REGION_PRIVILEGED_READ_ONLY
+        portMPU_REGION_READ_ONLY
+        portMPU_REGION_PRIVILEGED_READ_WRITE
+        portMPU_REGION_CACHEABLE_BUFFERABLE
+        portMPU_REGION_EXECUTE_NEVER
+      }
+    }
+      prvAllocateTCBAndStack->
+        pvPortMalloc->
+          vTaskSuspendAll->
+          xTaskResumeAll->
