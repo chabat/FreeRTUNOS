@@ -10,7 +10,7 @@
     Se não tá definido, defina. Isso serve para evitar que o compilador remova trechos de cógido onde poderia dar erro no escalonador.
     Usado para evitar a otimização onde essa variável é usada.
   }uxNumberOfItems: quantos itens tem na fila.
-
+  //Isso aqui parece incompleto
 }
 
 (tasks.c) TCB_t(tskTCB){
@@ -246,9 +246,51 @@ a debugação, pois indica o arquivo e a linha do erro.
     -Desabilita interrupções através de uma chamada de taskENTER_CRITICAL
     -Decrementa o valor de uxSchedulerSuspended, indicando que o escalonador foi resumido
     -Garante que o escalanonador não está mais suspenso e que hajam tarefas, caso contrário, usa mtCOVERAGE_TEST_MARKER().
-    -Enquanto houverem tarefas na lista
+    -Enquanto houverem tarefas na lista de tarefas pendentes (xPendingReadyList) (Checa com listLIST_IS_EMPTY()):
+      *Pega o endereço do TCB da tarefa com listGET_OWNER_OF_HEAD_ENTRY()
+      *Remove o xEventListItem e o xGenericListItem do TCB de suas respectivas listas com uxListRemove()
 
   }
+
+  (list.h) listLIST_IS_EMPTY(){
+    Macro para checar se uma lista está vazia, apenas vê se o número de itens é 0.
+    Retorna um BaseType_t.
+  }
+
+  (list.h) listGET_OWNER_OF_HEAD_ENTRY(){
+    Macro que obtém o endereço do dono do primeiro elemento numa lista, no escalonador, geralmente um TCB.
+    Faz isso acessando o dono do último elemento na listas
+    (como faz isso usando end->next->owner?)
+  }
+
+  (list.c) uxListRemove(){
+    remove o item passado por parâmetro de sua respectiva lista (o item tem o ponteiro para sua lista).
+    Retorna o número de elementos que permanecem na lista.
+    -Obtém a lista a qual o item pertence do própio item
+    -arruma os encadameantos da lista (liga os elementos anterior e próximo do item)
+    -mtCOVERAGE_TEST_DELAY (usado durante testes de cobertura de decisão)
+    -Garante que o índice da lista (pxIndex) seja deixado apontando para um item válido:
+      Caso o índice esteja apontando para o item removido, aponta para o anterior dele.
+      Caso contrário, apenas mtCOVERAGE_TEST_MARKER
+    -Seta o container do item (Lista ao qual pertence) como config
+    -Decrementa o número de itens da listas
+    -Retorna o número de itens restantes.
+  }
+
+  (tasks.c) prvAddTaskToReadyList(){
+    Macro para adicionar a tarefa do TCB passado como parâmetro no fim da lista de pronto apropriada.
+    *Macro de tracing traceMOVED_TASK_TO_READY_STATE
+    *Verifica e possivelmente atualiza a prioridade da maior tarefa pronta com uma chamada para taskRECORD_READY_PRIORITY
+    //PAREI AQUI
+  }
+
+  (tasks.c) taskRECORD_READY_PRIORITY(){
+    Macro para atualizar a variável uxTopReadyPriority, que guarda a prioridade da tarefa pronta com maior
+    prioridade
+    *Se a a prioridade da tarefa passada como parâmetro for maior que a guardada em uxTopReadyPriority,
+    atualiza uxTopReadyPriority para a prioridade passada como parametro.
+  }
+
 }
 
 --:)
