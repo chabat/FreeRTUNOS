@@ -24,4 +24,7 @@ StartScheduler ->
       prvAllocateTCBAndStack->
         pvPortMalloc->
           vTaskSuspendAll->
-          xTaskResumeAll->
+          xTaskResumeAll-> //até aqui em 11/05
+          *Aqui algumas macros para relizar operações nas listas, Checar se tá vazio, pegar dono da "cabeça", adicionar no fim da fila
+          *Macro para adicionar tarefa na lista de prontas atualiza variável que contém prioridade da tarefa pronta com maior prioridade
+          *

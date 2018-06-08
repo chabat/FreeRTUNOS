@@ -281,7 +281,7 @@ a debugação, pois indica o arquivo e a linha do erro.
     Macro para adicionar a tarefa do TCB passado como parâmetro no fim da lista de pronto apropriada.
     *Macro de tracing traceMOVED_TASK_TO_READY_STATE
     *Verifica e possivelmente atualiza a prioridade da maior tarefa pronta com uma chamada para taskRECORD_READY_PRIORITY
-    //PAREI AQUI
+    *Adiciona o TCB da tarefa a fila de tarefas prontas com uma chamada de vListInsertEnd()
   }
 
   (tasks.c) taskRECORD_READY_PRIORITY(){
@@ -289,6 +289,11 @@ a debugação, pois indica o arquivo e a linha do erro.
     prioridade
     *Se a a prioridade da tarefa passada como parâmetro for maior que a guardada em uxTopReadyPriority,
     atualiza uxTopReadyPriority para a prioridade passada como parametro.
+  }
+
+  (list.c) vListInsertEnd(){
+    Insere um item no final da lista, aparentemente usa-se listGET_OWNER_OF_NEXT_ENTRY para incrementar o pvIndex
+    e navegar pela lista até o item sendo inserido (?)
   }
 
 }
