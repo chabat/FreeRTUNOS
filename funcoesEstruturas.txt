@@ -186,14 +186,14 @@
 (tasks.c) XtaskCreate{ Definida como XtaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate,
  os outros dois são o ponteiro para o  buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois ultimos parametros
  são passados como NULL)
-   ConfigAssert():{ O primeiro irá verificar se o ponteiro não é nulo. O segundo provavelmente é para verificar
+   configASSERT():{ O primeiro irá verificar se o ponteiro não é nulo. O segundo provavelmente é para verificar
    se a prioridade da tarefa a ser criada é menor que a maior prioridade possível. É usado um bitwise and com a
    constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
    }
    prvAllocateTCBAndStack() { }
 }
 
-(FreeRTOS.h) ConfigAssert{ Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
+(FreeRTOS.h) configASSERT{ Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
 a debugação, pois indica o arquivo e a linha do erro.
 }
 
@@ -249,7 +249,9 @@ a debugação, pois indica o arquivo e a linha do erro.
     -Enquanto houverem tarefas na lista de tarefas pendentes (xPendingReadyList) (Checa com listLIST_IS_EMPTY()):
       *Pega o endereço do TCB da tarefa com listGET_OWNER_OF_HEAD_ENTRY()
       *Remove o xEventListItem e o xGenericListItem do TCB de suas respectivas listas com uxListRemove()
-
+      *Adiciona a tarefa a lista de pronto com prvAddTaskToReadyList();
+      *Se a tarefa movida para pronto tem prioridade maior que a tarefa atual(pxCurrentTCB->uxPriority), então uma troca de contexto deve
+      ser realizada (xYieldPending = pdTRUE)
   }
 
   (list.h) listLIST_IS_EMPTY(){
@@ -272,7 +274,7 @@ a debugação, pois indica o arquivo e a linha do erro.
     -Garante que o índice da lista (pxIndex) seja deixado apontando para um item válido:
       Caso o índice esteja apontando para o item removido, aponta para o anterior dele.
       Caso contrário, apenas mtCOVERAGE_TEST_MARKER
-    -Seta o container do item (Lista ao qual pertence) como config
+    -Seta o container do item (Lista ao qual pertence) como NULL
     -Decrementa o número de itens da listas
     -Retorna o número de itens restantes.
   }
@@ -292,10 +294,26 @@ a debugação, pois indica o arquivo e a linha do erro.
   }
 
   (list.c) vListInsertEnd(){
-    Insere um item no final da lista, aparentemente usa-se listGET_OWNER_OF_NEXT_ENTRY para incrementar o pvIndex
-    e navegar pela lista até o item sendo inserido (?)
+    Insere um item no final da lista passada como parâmetro
+    -Checa a integridade da lista e do item que está sendo inserido comparando valores de sua estrutura com uma constante, através de chamadas para
+    listTEST_LIST_INTEGRITY() e listTEST_LIST_ITEM_INTEGRITY().
+    -Atribui o próximo do elemento sendo inserido como o pxIndex da fila.
+    -Atribui o anterior do elemento sendo inserido como o anterior do pxIndex da fila.
+    -mtCOVERAGE_TEST_DELAY (usado durante testes de cobertura de decisão)
+    -Atribui ao próximo do anterior do pxIndex e ao anterior do pxIndex o novo item
+    -Salva no item em qual container (lista) ele se encontra
+    -incrementa o número de elementos na fila
   }
 
+  (list.h) listTEST_LIST_INTEGRITY(){
+    Macro que checa a integridade da lista passada como parâmetro. Faz isso comparando um valor da estrutura lista a um valor predeterminado, pode conseguir detectar
+    sobrescrita dos valores na memória.
+  }
+
+  (list.h) listTEST_LIST_ITEM_INTEGRITY(){
+    Macro que checa a integridade do item de lista passado como parâmetro. Faz isso comparando um valor da estrutura do item a um valor predeterminado,
+    pode conseguir detectar sobrescrita dos valores na memória.
+  }
 }
 
 --:)
@@ -314,7 +332,7 @@ software foram inicializados.
   Se a fila do timer ainda não foi inicializada/criada, crie duas listas de timer e diga que essas filas são as filas atual, depois crie a fila do timer.
   vListInitialise();
   xQueueCreate();
-}
+}vListInsertEnd
 
 (list.c) vListInitialise{ Recebe como parâmetro uma estrutura do tipo List_t e vai ajustar os ponteiros, tendo um ponteiro que marca o fim da fila (e.g. aponta para o fim dela),
 irá colocar um valor muito grande no fim, para que permaneça no final, assim o fim da fila sempre ficara lá. além de colocar o proximo e anterior itens da fila apontando
@@ -332,3 +350,31 @@ dando o valor de queueQUEUE_TYPE_BASE (que é de uso interno apenas, mas é defi
 
 **Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
 que podem ser redefinidas para prover funcionalidades de tracing. As macros vazias não afetam o funcionamento da aplicação.
+
+#### MAPAS DE FUNÇÕES:
+
+vTaskStartScheduler()
+  xTaskCreate() (xTaskGenericCreate)
+    configASSERT()
+    configASSERT()
+    prvAllocateTCBAndStack()
+      pvPortMalloc()
+        vTaskSuspendAll()
+        traceMALLOC()
+        xTaskResumeAll()
+          configASSERT()
+          taskENTER_CRITICAL()
+            listLIST_IS_EMPTY()
+            listGET_OWNER_OF_HEAD_ENTRY()
+            uxListRemove()
+              mtCOVERAGE_TEST_DELAY()
+              mtCOVERAGE_TEST_MARKER()
+              prvAddTaskToReadyList()
+                traceMOVED_TASK_TO_READY_STATE()
+                taskRECORD_READY_PRIORITY()
+                vListInsertEnd()
+                  listTEST_LIST_INTEGRITY()
+                    configASSERT()
+                  listTEST_LIST_ITEM_INTEGRITY()
+                    configASSERT()
+                  mtCOVERAGE_TEST_DELAY()
