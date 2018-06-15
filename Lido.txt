@@ -1,10 +1,11 @@
-xTimerCreateTimerTask, que vai criar o timer da tarefa. Vai verificar se a fila
-já foi criada, caso contrário cria ela, mas para isso antes ele inicia uma fila de timers,
-que são guardados em ordem de qual vai expirar mais cedo.
-Porém para criar a fila de timers, ele usa uma estrutura chamada Queue_t (que é ainda usada como
-a definição antiga, xQUEUE, por motivos de debug).
-Agora estou olhando a xQueueCreate.
-
+vtaskStartScheduler ->
+  xTimerCreateTimerTask ->
+    prvCheckForValidListAndQueue ->
+      vListInitialise-> Ajusta o ponteiro que marca o fim da fila, atribui o valor do ultimo cara e ajusta o proximo e anterior para o fim da fila.
+      xQueueCreate ->
+        xQueueGenericReset ->
+          xTaskRemoveFromEventList ->
+            uxListRemove ->
 
 StartScheduler ->
   xTaskCreate ->

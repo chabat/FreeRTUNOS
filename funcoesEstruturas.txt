@@ -22,7 +22,8 @@
   (10B) ListItem_t xGenericListItem{ É o que define o estado da tarefa. Se a lista que referencia esse item é a lista de pronto, então ele está pronto
   para ir para o escalonador.
   }
-  (10B) ListItem_t xEventListItem { Usado para refenciar uma tarefa a partir de uma lista de eventos.
+  (10B) ListItem_t xEventListItem { Usado para refenciar uma tarefa de uma lista de eventos, isso quer dizer que, por exemplo, se uma tarefa está esperando um dado chegar em uma
+  fila, então sua lista de eventos é referenciada da lista de filas esperando para receber.
   }
   (1B) UBaseType_t uxPriority { Prioridade. 0 é a mais baixa.
   }
@@ -133,8 +134,8 @@
   UBaseType_t uxMessagesWaiting Número de mensagens que estão na fila.
   UBaseType_t uxLength comprimento da fila. (É definido pelo numero de dados que ela guardará, não o número de bytes).
   UBaseType_t uxItemSize tamanho de cada item que essa fila irá manter.
-  UBaseType_t xRxLock Guarda o número de dados recebidos da fila enquanto ela estava bloqueada.
-  UBaseType_t xTxLock Guarda o número de dados colocados na fila enquanto ela estava bloqueada.
+  UBaseType_t xRxLock Guarda o número de dados recebidos da fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+  UBaseType_t xTxLock Guarda o número de dados colocados na fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
   #ND(0) configUSE_TRACE_FACILITY{
     UBaseType_t uxQueueNumber;
     UBaseType_t ucQueueType;
@@ -332,20 +333,64 @@ software foram inicializados.
   Se a fila do timer ainda não foi inicializada/criada, crie duas listas de timer e diga que essas filas são as filas atual, depois crie a fila do timer.
   vListInitialise();
   xQueueCreate();
-}vListInsertEnd
+}
 
 (list.c) vListInitialise{ Recebe como parâmetro uma estrutura do tipo List_t e vai ajustar os ponteiros, tendo um ponteiro que marca o fim da fila (e.g. aponta para o fim dela),
 irá colocar um valor muito grande no fim, para que permaneça no final, assim o fim da fila sempre ficara lá. além de colocar o proximo e anterior itens da fila apontando
 para o fim (provavelmente para dizer que a lista não contém nenhum membro).
 }
 
-(timers.c) xQueueCreate(){ Na verdade é usada assim para que só precise receber o valor do tamanho da queue e seu comprimento, mas na verdade ela chama a xQueueGenericCreate,
+(list.h) listLIST_IS_EMPTY(){ Recebe como parâmetro uma lista e verifica se o numero de itens nela é 0, se sim retorna 1, se não 0
+}
+
+(list.h) listGET_OWNER_OF_HEAD_ENTRY{ Recebe como um parâmetro uma lista da qual o dono do primeiro item deve ser retornado. Retorna o membro do primeiro membro na lista.
+}
+
+(list.c) uxListRemove(){ Remove o tcb de sua respectiva lista.
+  - Pega de qual lista esse item pertence.
+  - Troca os apontamentos. (O anterior aponta pro próximo e o proximo aponta pro anterior, assim esse item sai do encadeamento).
+  - Verifica se o apontamento a esquerda (?) está apontando para um valor válido.
+  - Se não estiver, faz ele apontar para a esquerda.
+  - Artera a variavel de qual lista ele pertence para null.
+  - Diminui a quantidade de itens e retorna ela.
+}
+
+(tasks.c) xTaskRemoveFromEventList(){ retire a tarefa de maior prioridade da lista de eventos esperando para escrever na fila e como ele pode escrever agora nessa fila, então
+o seu identificador de tcb será movido da lista de bloqueados para a lista de pronto. Assim como a lista de bloqueados, a lista de eventos também le ordenada por ordem de prioridades.
+  - Tenta atribuir listGET_OWNER_OF_HEAD_ENTRY() para a variável do tcb a ser desbloquedo.
+  - Verifica se ele conseguiu atribuir.
+  - Chama uxListRemove() para a lista a qual o tcb atribuido pertence, caso o escalonador não esteja suspenso.
+  - Se ele estiver suspenso, então coloca na lista de que estão pendendo para estar prontos esse tcb.
+}
+
+(queue.c) xQueueGenericReset{ Recebe como parâmetro um handle de queue e um basetype_t
+  - Vai fazer um ponteiro de queue_t apontar para o ponteiro de xQueue.
+  - Verifica se o ponteiro não é nulo.
+  - Entra na região crítica
+  - Altera o rabo da fila para a primeira posição não utilizada da fila.
+  - Atribui 0 para as mensagens esperando.
+  - Diz que é pra começar a ler da cauda e escrever pela cabeça
+  - Define que a quantidade de itens que foram lidos/removidos são -1, significando que a queue não está bloqueada.
+  - Se xNewQueue estiver pdFalse, quer dizer que tem tarefas bloqueadas esperando para ler/escrever da fila. Elas se manterão bloqueadas, mas se possuem tarefas bloqueadas esperando para escrever na fila,
+  então uma deve ser escolhida para sair do estado de bloqueado, uma vez que será possível escrever nela.
+  - ele chama listLIST_IS_EMPTY() para ver se a lista de mensagens esperando para escrever está vazia, se não está vazia ela tenta remover essa tarefa da lista que pertence através de xTaskRemoveFromEventList();
+}
+
+(queue.c) xQueueCreate()(xQueueGenericCreate){ Na verdade é usada assim para que só precise receber o valor do tamanho da queue e seu comprimento, mas na verdade ela chama a xQueueGenericCreate,
 dando o valor de queueQUEUE_TYPE_BASE (que é de uso interno apenas, mas é definido como 0).
   Queue_t *pxNewQueue; { um ponteiro para a nova queue que será criada (com o malloc). }
   size_t xQueueSizeInBytes;
   QueueHandle_t xReturn;
   - Vai verificar se o tamanho da fila é maior que 0, para evitar erros.
-  Se o tamanho de cada item for 0, então ele diz que não vai haver uma área de armazenamento de queue.
+  Se o tamanho de cada item for 0, então ele diz que não vai haver uma área de armazenamento de queue. Possívelmente para poder acessar os metadados da fila.
+  Caso contrário, vai diser que o tamanho da fila em bytes é um a mais do que o original para fazer as checagens mais rápido.
+  - Aloca a fila com o pvPortMalloc(), que nada mais é do que um malloc normal.
+  - Verifica se consegue alocar a nova fila, em caso positivo:
+  - Se o tamanho do item for 0, ele vai fazer com que o ponteiro pcHead aponte para o início da queue,
+  para ter certeza que está dentro da memória.
+  - Caso contrário, fará com que pcHead aponte para o início da área de armazenamento, pulando os dados estruturais da fila.
+  - Atualiza os dados estruturais da fila, tais como uxLenght e uxItemSize e chama xQueueGenericReset();
+  -
 }
 
 **Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
