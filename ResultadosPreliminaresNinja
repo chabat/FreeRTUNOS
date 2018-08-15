@@ -1,0 +1,15 @@
+-----------------TAREFAS-----------------
+Tamanho do TCB de cada tarefa = 41 bytes
+Largura da pilha (Tamanho da palavra) = 1 byte
+Profundidade mínima da pilha = 100 bytes/palavras
+Máximo de tarefas ao mesmo tempo com pilhas de profundidade mínima = 7
+
+1676 bytes for local variables (maximum 2048)
+
+--> 7 TAREFAS, 100B/PILHA:
+7 * 100 + 7 * 41 = 987
+1676 - 987 = 689 ???
+
+--> 4 TAREFAS, 200B/PILHA:
+4 * 200 + 4 * 41 = 964
+1676 - 964 = 712 ???
