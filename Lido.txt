@@ -1,11 +1,12 @@
 vtaskStartScheduler ->
   xTimerCreateTimerTask ->
-    prvCheckForValidListAndQueue ->
+    prvCheckForValidListAndQueue -> Verifica se a lista dos timers ativos que são referenciados, junto da fila usada para se comunicar com os timers de software foram inicializados. Se não estiverem, cria e inicializa tudo.
       vListInitialise-> Ajusta o ponteiro que marca o fim da fila, atribui o valor do ultimo cara e ajusta o proximo e anterior para o fim da fila.
-      xQueueCreate ->
-        xQueueGenericReset ->
-          xTaskRemoveFromEventList ->
-            uxListRemove ->
+      xQueueCreate -> Cria uma queue e tem como variável de retorno o handle dela.
+        xQueueGenericReset -> Deixa a lista como se fosse criada de novo, entretanto realiza de modos diferentes dependendo de quantas vezes ela foi chamada antes para aquela fila.
+          (tasks.c) xTaskRemoveFromEventList -> Remove uma tarefa de uma fila de eventos e o coloca na lista de pronto.  Started here 05/07.
+            (list.c) uxListRemove -> Remove um membro da lista.
+
 
 ------------------------------------------------------------------------------------------------
 
@@ -31,3 +32,42 @@ StartScheduler ->
           *Aqui algumas macros para relizar operações nas listas, Checar se tá vazio, pegar dono da "cabeça", adicionar no fim da fila
           *Macro para adicionar tarefa na lista de prontas atualiza variável que contém prioridade da tarefa pronta com maior prioridade
           *
+
+
+================================================================================================================================================================================================
+
+Chama xTimerCreateTimerTask para criar a tarefa daemon, que vai cuidar dos timers, aí essa função vai verificar se as listas de filas da tarefa daemon já foram inicializadas,
+em caso negativo cria e inicializa tudo, desabilitando interrupções.
+
+Se a fila dos timers não estiverem inicializadas, ela vai criar duas listas e depois criar a fila da tarefa daemon. Verifica se essa fila conseguiu ser criada e adicione ela
+nos registros se ainda for possível.
+
+Para criar as listas ele vai somente ajustar os ponteiros dessa lista, colocar um valor mt grande no fim, para que assim ela permaneça no final.
+
+Para criar a fila ele vai ver se é maior que 0, em caso negativo, dirá q n vai ter uma área de armazenamento de queue, somente existirá a fila para acessar os metadados.
+Caso contrário irá fazer com que o tamanho da fila seja um pouco maior do que realmente é para fazer checagens mais rápido. Caso consiga alocar a fila com o malloc e o
+tamanho de cada item seja 0, vai fazer com que a cabeça da fila aponte para o início dela, evitando assim um endereço fora da memória. Caso seja maior que 0, vai apontar
+para o início dos dados, pulando os dados estruturais da fila. Atualiza eles (uxLength e uxItemSize) e chama uma função para resetar a queue.
+
+Para resetar a queue ele irá definir a tail da queue para a primeira posição não utilizada, 0 para as mensagens esperando (e.g. mensagens que estão na fila), diz que ela
+não está bloqueada. Se na função de reset da queue for passado como segundo parametro pdFALSE, então quer dizer que ele não está reinicializando essa fila pela primeira
+vez, logo podem existir tarefas esperando para escrever na fila. Como ela foi reinicializada, então existe espaço suficiente para escrever nela, logo uma dessas tarefas
+deve sair do estado de bloqueada para pronta para escrever lá.
+
+Para remover essa tarefa da lista de espera, chama-se outra função que irá remover essa tarefa da lista de eventos daquela fila e mudar seu status para bloqueado.
+
+Se ao remover essa tarefa da lista, for uma tarefa com maior prioridade da que está sendo executada agora, então é necessário que essa tarefa desbloqueada assuma o controle
+do processador, então a tarefa atual irá ceder o processador para que o escalonador escalone essa tarefa.
+
+Se essa fila estiver sendo criada pela primeira vez, então é necessário criar as listas de tarefas esperando para escrever e ler dessa fila. E volta para xQueueGenericCreate.
+
+Se estiver usando tracing, aqui chama uma macro para pegar o valor da fila criada.
+
+Se estiver usando a funcionalidade de conjunto de filas, então atribua ao container dela null, pois ela não pertence a nenhum conjunto.
+
+Atribui à variável de controle a nova queue e retorna ela para a função que o chamou.
+
+Se a fila foi inicializada e INCLUDE_xTimerGetTimerDaemonTaskHandle é definido como 1, então a função de criar a tarefa daemon dos timers salvará o handle dela. Caso
+contrário, criará a fila sem salvá-lo.
+
+Retorna pdPASS se conseguiu criar a tarefa e pdFAIL caso contrário.
