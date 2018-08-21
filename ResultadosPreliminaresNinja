@@ -13,3 +13,16 @@ Máximo de tarefas ao mesmo tempo com pilhas de profundidade mínima = 7
 --> 4 TAREFAS, 200B/PILHA:
 4 * 200 + 4 * 41 = 964
 1676 - 964 = 712 ???
+
+
+Quantidade de Tarefas | Tamanho Máximo da Pilha       | Total de bytes ocupados pelas tarefas (Pilhas + TCBS)
+         1            |           1079/1089*          |           1120/1130*
+         2            |            517/522*           |           1116/1126*
+         3            |            329/333*           |           1110/1122*
+         4            |            236/238*           |           1108/1116*
+         5            |            179/181*           |           1100/1110*
+         6            |            142/144*           |           1098/1110*
+         7            |            115/117*           |           1092/1106*
+         
+*Tirando o for para criar as tarefas e a variável inteira iId, consegue-se alocar alguns bytes a mais,
+dependendo do número de tarefas, contantes não alteram na quantidade máxima de bytes alocáveis por pilha.
