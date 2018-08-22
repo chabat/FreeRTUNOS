@@ -1,7 +1,7 @@
 #### ESTRUTURAS:
 
 (list.h) List_t{
-  listFIRST_INTEGRITY_CHECK_VALUE:{
+  (2B)listFIRST_INTEGRITY_CHECK_VALUE:{
     configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES: Existe uma definição dela, que é
     usada para fazer uma verificação básica de corrupção de dados, que caso ela
     não esteja definida, será definida como 0.
@@ -9,15 +9,31 @@
   configLIST_VOLATILE{
     Se não tá definido, defina. Isso serve para evitar que o compilador remova trechos de cógido onde poderia dar erro no escalonador.
     Usado para evitar a otimização onde essa variável é usada.
-  }uxNumberOfItems: quantos itens tem na fila.
-  ListItem_t * configLIST_VOLATILE pxIndex{
+  }(2B) uxNumberOfItems: quantos itens tem na fila.
+  (14B)ListItem_t * configLIST_VOLATILE pxIndex{
     Usado para passar pela lista. Aponta para o ultimo item retornado pela chamada listGET_OWNER_OF_NEXT_ENTRY.
   }
-  MiniListItem_t xListEnd{
+  (8B)MiniListItem_t xListEnd{
     Item da lista que contém o maior valor possível significando que chegou no fim da lista.
   }
-  //Isso aqui parece incompleto -> Agora tá completo.
-}
+}(26B)
+
+(list.h)ListItem_t{
+  (2B)listFIRST_INTEGRITY_CHECK_VALUE;
+  (2B)configLIST_VOLATILE TickType_t xItemValue;
+  (2B)struct xLIST_ITEM* configLIST_VOLATILE pxNext;
+  (2B)struct xLIST_ITEM* configLIST_VOLATILE pxPrevious;
+  (2B)void *pvOwner;
+  (2B)void *configLIST_VOLATILE pvContainer;
+  (2B)listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE;
+}(14B)
+
+(list.h)MiniListItem_t{
+  (2B)listFIRST_INTEGRITY_CHECK_VALUE;
+  (2B)configLIST_VOLATILE TickType_t xItemValue;
+  (2B)struct xLIST_ITEM* configLIST_VOLATILE pxNext;
+  (2B)struct xLIST_ITEM* configLIST_VOLATILE pxPrevious;
+}(8B)
 
 (tasks.c) TCB_t(tskTCB){
   (2B) volatile stackType_t pxTopOfStack{ Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
@@ -91,19 +107,6 @@
   }
 }
 
-(list.h) ListItem_t(xLIST_ITEM){
-  listFIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE { Não é intencionado para ser usado pela aplicação, mas sim para testes dos desenvolvedores
-  do FreeRTOS. }
-  (2B) configLIST_VOLATILE{ Já Definido. } TickType_t xItemValue { É o valor sendo listado, em muitos casos usado para ordenar a
-  lista em ordem decrescente.
-  }
-  (2B) xLIST_ITEM *configLIST_VOLATILE pxNext{ Ponteiro para o proximo listItem_t na lista. }
-  (2B) xLIST_ITEM *configLIST_VOLATILE pxPrevious { Ponteiro para o anterior listItem_t na lista. }
-  (2B) void *pvOwner { Ponteiro para o objento (normalmente o TCB) que contém esse item. }
-  (2B) void *configLIST_VOLATILE pvContainer{ Ponteiro para a lista no qual este item está colocado, se existir. }
-  listSECOND_LIST_ITEM _INTEGRITY_CHECK_VALUE {Já Definido }
-} (10B)
-
 (tasks.c) eNotifyValue{ é um enumerador, onde
   eNotWaitingNotification é 0
   eWaitingNotification é 1
@@ -124,34 +127,37 @@
 }
 
 (queue.c) Queue_t (xQUEUE){
-  int8_t *pcHead{ Aponta para o começo da area de armazenamento da Queue.
+  Caso seja mutex, haverá uma constante que chama queueQUEUE_IS_MUTEX, que nada mais é que se for um mutex, a cabeça da fila é usada como NULL, dizendo
+  que é mutex.
+  (1B) int8_t *pcHead{ Aponta para o começo da area de armazenamento da Queue. Se for mutex, será usado como uxQueueType.
   }
-  int8_t *pcTail{ Aponta para o byte no fim da área de armazenamento da Queue. É alocado um byte a mais só pra isso.
+  (2B) int8_t *pcTail{ Aponta para o byte no fim da área de armazenamento da Queue. É alocado um byte a mais só pra isso. Se for um mutex, será chamado de
+  pxMutexHolder.
   }
-  int8_t *pcWriteTo{ Aponta para o próximo espaço vazio da área de armazenamento.
+  (2B) int8_t *pcWriteTo{ Aponta para o próximo espaço vazio da área de armazenamento.
   }
-  union{ Usado pra reduzir memória.
+  (1B) union{ Usado pra reduzir memória.
     int8_t *pcReadFrom{ Aponta para o ultimo lugar que um item enfileirado foi lido quando a estrutura é usada como uma fila.}
     UBaseType_t uxRecursiveCallCount{ Mantém um contador do nível da recursão dos mutexes, e.g. quantas vezes aquele mutex foi pego na recursão
     quando a estrutura está sendo usada como mutex.
   }
-  List_t xTasksWaitingToSend lista de todas as tarefas que estão bloqueadas aguardando para escreverem nessa fila. (São guardadas em ordem de prioridade).
-  List_t xTasksWaitingToReceive lista de todas as tarefas que estão bloqueadas aguardando para lerem dessa fila. (Também em ordem de prioridade).
-  UBaseType_t uxMessagesWaiting Número de mensagens que estão na fila.
-  UBaseType_t uxLength comprimento da fila. (É definido pelo numero de dados que ela guardará, não o número de bytes).
-  UBaseType_t uxItemSize tamanho de cada item que essa fila irá manter.
-  UBaseType_t xRxLock Guarda o número de dados recebidos da fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
-  UBaseType_t xTxLock Guarda o número de dados colocados na fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+  (26B)List_t xTasksWaitingToSend lista de todas as tarefas que estão bloqueadas aguardando para escreverem nessa fila. (São guardadas em ordem de prioridade).
+  (26B)List_t xTasksWaitingToReceive lista de todas as tarefas que estão bloqueadas aguardando para lerem dessa fila. (Também em ordem de prioridade).
+  (1B)UBaseType_t uxMessagesWaiting Número de mensagens que estão na fila.
+  (1B)UBaseType_t uxLength comprimento da fila. (É definido pelo numero de dados que ela guardará, não o número de bytes).
+  (1B)UBaseType_t uxItemSize tamanho de cada item que essa fila irá manter.
+  (1B)UBaseType_t xRxLock Guarda o número de dados recebidos da fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+  (1B)UBaseType_t xTxLock Guarda o número de dados colocados na fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
   #ND(0) configUSE_TRACE_FACILITY{
     UBaseType_t uxQueueNumber;
     UBaseType_t ucQueueType;
   }
   configUSE_QUEUE_SETS{
-    QueueDefinition *pxQueueSetContainer{ Estou em dúvida, se ele segura as queues, ou seja se ele é um container dessa queue, ou se ele aponta pra qual queue esse carinha
+    (2B) QueueDefinition *pxQueueSetContainer{ Estou em dúvida, se ele segura as queues, ou seja se ele é um container dessa queue, ou se ele aponta pra qual queue esse carinha
     aqui pertence.
     }
   }
-}
+}(63B)
 
 #### TIPOS:
 
@@ -419,6 +425,12 @@ dando o valor de queueQUEUE_TYPE_BASE (que é de uso interno apenas, mas é defi
 
 (semphr.h) xSemaphoreTake(){
   Na verdade é uma definição pra xQueueGenericReceive que recebe um QueueHandle_t do semaforo, null, o tempo de bloqueio e pdFALSE;
+}
+
+(queue.c) xQueueGenericReceive(){
+  - Verifica se a fila existe;
+  - Entra na região crítica.
+  -
 }
 
 **Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
