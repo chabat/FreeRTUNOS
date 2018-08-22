@@ -9,26 +9,21 @@ Authors: Felipe Chabatura Neto
 #include <Arduino_FreeRTOS.h>
 #include <ArduinoTestSuite.h>
 #define mainDELAY_LOOP_COUNT 112345 /* Usado como contador para o loop, para criar um delay */
-#define mainTASK_QUANTITY 1 /*Quantidade de tarefas a serem criadas*/
 #define mainSTACK_DEPTH 1089 /*Tamanho da pilha de cada tarefa em bytes*/
 
 void vTarefa(void *pvParametros);
 
 void setup() {
-  int iId;
-  
   Serial.begin(9600); /* Define a taxa de bits por segundo para transmissão de dados */
-
-  //Serial.println(ATS_GetFreeMemory());
-
-  for(iId = 1; iId <= mainTASK_QUANTITY; iId++){
-    xTaskCreate( vTarefa, "Tarefa", mainSTACK_DEPTH, (void*) iId, 1, NULL);
-  }
-
-  //Serial.println(ATS_GetFreeMemory());  
   
-  vTaskStartScheduler(); /* Inicia o escalonador */  
+  Serial.println(ATS_GetFreeMemory());
+    
+  xTaskCreate( vTarefa, "Tarefa", mainSTACK_DEPTH, (void*) 1, 1, NULL);
 
+  Serial.println(ATS_GetFreeMemory());
+    
+  vTaskStartScheduler(); /* Inicia o escalonador */
+  //Serial.print("A");  
   for( ;; ); /* Se tudo deu certo, este trecho nunca será executado */
 }
 

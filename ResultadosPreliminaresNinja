@@ -4,7 +4,7 @@ Largura da pilha (Tamanho da palavra) = 1 byte
 Profundidade mínima da pilha = 100 bytes/palavras
 Máximo de tarefas ao mesmo tempo com pilhas de profundidade mínima = 7
 
-1676 bytes for local variables (maximum 2048)
+1686 bytes for local variables (maximum 2048)
 
 --> 7 TAREFAS, 100B/PILHA:
 7 * 100 + 7 * 41 = 987
@@ -23,6 +23,6 @@ Quantidade de Tarefas | Tamanho Máximo da Pilha       | Total de bytes ocupados
          5            |            179/181*           |           1100/1110*
          6            |            142/144*           |           1098/1110*
          7            |            115/117*           |           1092/1106*
-         
+
 *Tirando o for para criar as tarefas e a variável inteira iId, consegue-se alocar alguns bytes a mais,
 dependendo do número de tarefas, contantes não alteram na quantidade máxima de bytes alocáveis por pilha.
