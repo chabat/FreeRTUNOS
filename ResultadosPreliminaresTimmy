@@ -1,0 +1,19 @@
+- Não tem timer.
+
+MUTEXES:
+
+- Com um mutex e um for para pegar todos os mutexes, consome 16 microsegundos.
+- Dois: 28 microsegundos.
+- Três: entre 40 a 44 microsegundos, algumas vezes vai pra 64.
+- Quatro: média 60, as vezes 56, as vezes 64.
+- Cinco: fica 68, as vezes 72 e 92.
+- Seis: 80, 84, 100 e 104.
+- dez: 136, 140 e 160.
+- treze: 176 e 200.
+- catorze: 188 a 216.
+- quinze: não suporta.
+Cada mutex adicional consome de 12 a 20 microssegundos para ser "pego".
+
+Como cada mutex é uma queue_t e cada queue_t é possui 63B, então cada mutex vai
+possuir 63B, o que usariam só 882 bytes. Adicionando o custo de criar uma tarefa
+que a suporta, dá uns 1kb.
