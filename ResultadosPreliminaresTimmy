@@ -1,6 +1,19 @@
 - Não tem timer.
 
 MUTEXES:
+- Para testar os mutexes, foi usado um for que chama xSemaphoreTake para cada semáforo.
+
+N. Mutex  | Quantidade de Memória | Tempo
+1         |
+2
+3
+4
+5
+6
+7
+8
+9
+10
 
 - Com um mutex e um for para pegar todos os mutexes, consome 16 microsegundos.
 - Dois: 28 microsegundos.
