@@ -24,7 +24,7 @@ Assim sendo, a fórmula pode ser escrita da seguindte maneira:
 CT = 67 + 63*MAXV + 14*MAXT;
 
 Isso é a memória usada sem ser considerada a memória alocada para a tarefa.
-Para saber, somente soma-se 200.
+Para saber, somente soma-se 241 * MAXT.
 
 N. Mutex   | N. Tarefas | Quantidade de Memória | Tempo(useg)
 01         |     1      |         144           | 16, 24, 32;
@@ -51,34 +51,34 @@ N. Mutex   | N. Tarefas | Quantidade de Memória | Tempo(useg)
 22         |     1      |         1467          | 296, 300, 320;
 23         |     1      |         1530          | 308, 312, 332;
 24         |     1      |         1593          | 324, 348;
-25         |     1      |         1656          | -------------
+25         |     1      |         1656          | ------------- <- A partir daqui não dá mais.
 
 N. Mutex   | N. Tarefas | Quantidade de Memória | Tempo(useg)
-01         |     2      |                       |
-02         |     2      |                       |
-03         |     2      |                       |
-04         |     2      |                       |
-05         |     2      |                       |
-06         |     2      |                       |
-07         |     2      |                       |
-08         |     2      |                       |
-09         |     2      |                       |
-10         |     2      |                       |
-11         |     2      |                       |
-12         |     2      |                       |
-13         |     2      |                       |
-14         |     2      |                       |
-15         |     2      |                       |
-16         |     2      |                       |
-17         |     2      |                       |
-18         |     2      |                       |
-19         |     2      |                       |
-20         |     2      |                       |
-21         |     2      |                       |
-22         |     2      |                       |
-23         |     2      |                       |
-24         |     2      |                       |
-25         |     2      |                       |
+01         |     2      |         158           | 120, 124, 248;
+02         |     2      |         221           | 172 - 300; <- Desconsiderar daqui pra baixo.
+03         |     2      |         284           | 1100, 1104;
+04         |     2      |         347           | 1128, 1124;
+05         |     2      |         410           | 1152, 1156;
+06         |     2      |         473           | 99484, 99488, 99492;  <- ????
+07         |     2      |         536           | 1208, 1212, 1216;
+08         |     2      |         599           | 1232, 1236, 1240;
+09         |     2      |         662           | ???
+10         |     2      |         725           | ???
+11         |     2      |         788           |
+12         |     2      |         851           |
+13         |     2      |         914           |
+14         |     2      |         977           |
+15         |     2      |         1040          |
+16         |     2      |         1103          |
+17         |     2      |         1166          |
+18         |     2      |         1229          |
+19         |     2      |         1292          |
+20         |     2      |         1355          |
+21         |     2      |         1418          |
+22         |     2      |         1481          |
+23         |     2      |         1544          |
+24         |     2      |         1607          |
+25         |     2      |         1670          |
 
 
 - Com um mutex e um for para pegar todos os mutexes, consome 16 microsegundos.
@@ -96,3 +96,11 @@ Cada mutex adicional consome de 12 a 20 microssegundos para ser "pego".
 Como cada mutex é uma queue_t e cada queue_t é possui 63B, então cada mutex vai
 possuir 63B, o que usariam só 882 bytes. Adicionando o custo de criar uma tarefa
 que a suporta, dá uns 1kb.
+
+
+--
+
+Aparentemente os mutexes não bloqueiam de verdade a tarefa, ele só coloca que aquele
+tcb tá usando o mutex, mas não tem aquele negócio de colocar na fila, pra que asim que
+libere, o primeiro que quer, com maior prioridade usar vai conseguir. Ele somente garante
+que uma tarefa apenar entrará lá.
