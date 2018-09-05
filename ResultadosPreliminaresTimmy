@@ -104,3 +104,12 @@ Aparentemente os mutexes não bloqueiam de verdade a tarefa, ele só coloca que 
 tcb tá usando o mutex, mas não tem aquele negócio de colocar na fila, pra que asim que
 libere, o primeiro que quer, com maior prioridade usar vai conseguir. Ele somente garante
 que uma tarefa apenar entrará lá.
+
+--
+
+Criei uma tarefa gatekeeper para não ter que usar mais mutexes, e pelo que eu vi,
+com poucos mutexes apenas uma tarefa pega todos eles e solta.
+Aumentando o numero de mutexes para 5, as tarefas começam a intercalar, entretanto uma
+sempre pega todos os mutexes e depois os solta, aí vem a outra e faz a mesma coisa.
+Aumentando mais o numero, 6 por exemplo, uma tarefa somente executa.
+Provavelmente tem a ver com o fato de que com 5 mutexes
