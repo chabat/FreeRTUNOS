@@ -1,9 +1,7 @@
-- Não tem timer.
-
 MUTEXES:
 - Para testar os mutexes, foi usado um for que chama xSemaphoreTake para cada semáforo.
 
-como eu uso dois semáforos, um para começar a pegar todos os semáforos e outros N semáforos para serem pegos.
+Como eu uso dois semáforos, um para começar a pegar todos os semáforos e outros N semáforos para serem pegos.
 O custo em memória total(CT) será pela fórmula:
 
 CT = CPS + CONSTS + COS + TCONSTS;
@@ -24,7 +22,6 @@ Assim sendo, a fórmula pode ser escrita da seguindte maneira:
 CT = 67 + 63*MAXV + 14*MAXT;
 
 Isso é a memória usada sem ser considerada a memória alocada para a tarefa.
-Para saber, somente soma-se 241 * MAXT.
 
 N. Mutex   | N. Tarefas | Quantidade de Memória | Tempo(useg)
 01         |     1      |         144           | 16, 24, 32;
@@ -94,9 +91,7 @@ N. Mutex   | N. Tarefas | Quantidade de Memória | Tempo(useg)
 Cada mutex adicional consome de 12 a 20 microssegundos para ser "pego".
 
 Como cada mutex é uma queue_t e cada queue_t é possui 63B, então cada mutex vai
-possuir 63B, o que usariam só 882 bytes. Adicionando o custo de criar uma tarefa
-que a suporta, dá uns 1kb.
-
+possuir 63B, o que usariam só 882 bytes.
 
 --
 
@@ -113,3 +108,34 @@ Aumentando o numero de mutexes para 5, as tarefas começam a intercalar, entreta
 sempre pega todos os mutexes e depois os solta, aí vem a outra e faz a mesma coisa.
 Aumentando mais o numero, 6 por exemplo, uma tarefa somente executa.
 Provavelmente tem a ver com o fato de que com 5 mutexes
+
+--
+
+Agora vou testar com o aumento de tarefa, quantos mutexes serão possíveis usar, dado uma
+quantidade de tarefas.
+Cada tarefa teria 200 bytes de pilha.
+
+Quantidade de variaveis globais: 69 bytes.
+Quantidade de variáveis locais: 8 bytes.
+Quantidade de variaveis fexíveis: 63 * (MAXV) + ??? * (MAXT) + 17;
+
+|   Tarefas   |   Max Mutexes   |
+|     1       |       17        |
+|     2       |       10        |
+|     3       |        3        |
+
+
+--
+
+Voltando para queue, vou ver como ela se comporta quando é um mutex.
+
+Aparentemente uma tarefa usa muito mais que a 241 bytes, o que pode ser evidenciado no teste anterior.
+Comecei a estudar timers, testando o aumento de tarefas com a quantidade de timers, o que se pode
+perceber, com a tarefa de tamanho 200 -- simulando alguma funcionalidade, é:
+
+|   Tarefas   |     Timers      |
+|     1       |       37        |
+|     2       |       25        |
+|     3       |       14        |
+|     4       |        4        |
+|     5       |        0        |

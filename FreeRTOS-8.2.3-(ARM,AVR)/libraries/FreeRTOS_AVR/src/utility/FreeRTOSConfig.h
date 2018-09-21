@@ -79,7 +79,7 @@
  * application requirements.
  *
  * THESE PARAMETERS ARE DESCRIBED WITHIN THE 'CONFIGURATION' SECTION OF THE
- * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE. 
+ * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE.
  *
  * See http://www.freertos.org/a00110.html.
  *----------------------------------------------------------*/
@@ -121,12 +121,19 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelay				1
 
 /* WHG definitions for Arduino */
-#define configUSE_MUTEXES        1
 #define INCLUDE_uxTaskGetStackHighWaterMark 1
 #define INCLUDE_xTaskGetIdleTaskHandle 1
 #define configUSE_MALLOC_FAILED_HOOK	1
 #define configCHECK_FOR_STACK_OVERFLOW 2
 #define configENABLE_BACKWARD_COMPATIBILITY 0
+
+/* Definition for timers
+/* Software timer definitions. */
+#define configUSE_TIMERS				1
+#define configTIMER_TASK_PRIORITY		( 2 )
+#define configTIMER_QUEUE_LENGTH		5
+#define configTIMER_TASK_STACK_DEPTH	( configMINIMAL_STACK_SIZE * 2 )
+
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
 // WHG
