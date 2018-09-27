@@ -15,14 +15,96 @@ Máximo de tarefas ao mesmo tempo com pilhas de profundidade mínima = 7
 1676 - 964 = 712 ???
 
 
-Quantidade de Tarefas | Tamanho Máximo da Pilha       | Total de bytes ocupados pelas tarefas (Pilhas + TCBS)
-         1            |           1079/1089*          |           1120/1130*
-         2            |            517/522*           |           1116/1126*
-         3            |            329/333*           |           1110/1122*
-         4            |            236/238*           |           1108/1116*
-         5            |            179/181*           |           1100/1110*
-         6            |            142/144*           |           1098/1110*
-         7            |            115/117*           |           1092/1106*
+Quantidade de Tarefas | Tamanho Máximo da Pilha (Funcional/Alocável)  | Total de bytes ocupados pelas tarefas (Pilhas + TCBS)
+         1            |           1089                                |              1130
+         2            |            522                                |              1126
+         3            |            333                                |              1122
+         4            |            238                                |              1116
+         5            |            181                                |              1110
+         6            |            144                                |              1110
+         7            |            117                                |              1106
+
+Planilha: https://goo.gl/5pdYQw
 
 *Tirando o for para criar as tarefas e a variável inteira iId, consegue-se alocar alguns bytes a mais,
 dependendo do número de tarefas, contantes não alteram na quantidade máxima de bytes alocáveis por pilha.
+
+Quantidade de RAM ocupada:
+Código sem nada -> 9 bytes
+Código com Serial.* -> 184 bytes (+ 175)
+Código com \#include <Arduino_FreeRTOS.h> -> 127 bytes (+ 118)
+  *Adicionando vTaskStartScheduler(); -> 159 bytes (+32)
+
+Espaço utilizado por variáveis do Arduino: 9
+-> timer0_millis: ?(4)                                       = 4
+-> timer0_fract: ?(1)                                        = 1
+-> timer0_overflow_count: ?(4)                               = 4
+
+S-> Static , V->Volatile
+tasks.c: 69
+-> V pxCurrentTCB: *TCB_t(2)                                 = 2
+-> S pxReadyTasksLists: List_t(9B) * configMAX_PRIORITIES(4) = 36
+-> S xDelayedTaskList1: List_t(9B)                           = 9
+-> S xDelayedTaskList2: List_t(9B)                           = 9
+-> S V pxDelayedTaskList: List_t*(2B)                        = 2
+-> S V pxOverflowDelayedTaskList: List_t*(2B)                = 2
+-> S xPendingReadyList: List_t(9B)                           = 9
+Including VtaskDelete (True): 10
+-> S xTasksWaitingTermination: List_t(9B)                    = 9
+-> S V uxTasksDeleted: UBaseType_t(1B)                       = 1
+Including VtaskSuspend (True): 9
+-> S xSuspendedTaskList: List_t(9B)                          = 9
+Including xTaskGetIdleTaskHandle (False): 2
+-> S xIdleTaskHandle: TaskHandle_t(2B)                       = 2
+Other File private variables: 12
+-> S V uxCurrentNumberOfTasks: UBaseType_t(1B)               = 1
+-> S V xTickCount: TickType_t(2B)                            = 2
+-> s V uxTopReadyPriority: UBaseType_t(1B)                   = 1
+-> S V xSchedulerRunning: BaseType_t(1B)                     = 1
+-> S V uxPendedTicks: UBaseType_t(1B)                        = 1
+-> S V xYieldPending: BaseType_t(1B)                         = 1
+-> S V xNumOfOverflows: BaseType_t(1B)                       = 1
+-> S uxTaskNumber: UBaseType_t(1B)                           = 1
+-> S V xNextTaskUnblockTime: TickType_t(2B)                  = 2
+-> S V uxSchedulerSuspended: UBaseType_t(1B)                 = 1
+Defining configGENERATE_RUN_TIME_STATS as 1 (False): 8
+-> S ulTaskSwitchedInTime: uint32_t(4)                       = 4
+-> S ulTotalRunTime: uint32_t(4)                             = 4
+
+timers.c (Se estiverem inclusos): 24
+-> S xActiveTimerList1: List_t(9B) (OT)               = 9
+-> S xActiveTimerList2: List_t(9B) (OT)               = 9
+-> S pxCurrentTimerList: List_t*(2B)                  = 2
+-> S pxOverflowTimerList: List_t*(2B)                 = 2
+-> S xTimerQueue: QueueHandle_t(2B)                   = 2
+Including xTimerGetTimerDaemon<Arduino_FreeRTOS.h>TaskHandle (False):
+-> xTimerTaskHandle: TaskHandle_t(2B)                 = 2
+
+Adicionando apenas <Arduino_FreeRTOS.h>:
+Variaveis que aparecem na tabela de simbolos: 18
+xLastTime                                                    = 2
+pxOverflowTimerList                                          = 2
+pxCurrentTimerList                                           = 2
+xTimerQueue                                                  = 2
+__malloc_heap_start                                          = 2
+__brkval                                                     = 2
+__malloc_heap_end                                            = 2
+__flp                                                        = 2
+__malloc_margin                                              = 2
+
+Chamando vTaskStartScheduler():
+Variaveis que aparecem na tabela de simbolos:
+xActiveTimerList1                                            = 9
+xActiveTimerList2                                            = 9
+
+Chamando xTaskCreate():
+Variaveis que aparecem na tabela de simbolos:
+...
+
+Somatorio só com <Arduino_FreeRTOS.h>:
+Variaveis do Arduino:                = 9
+Globais em tasks.c:                  = 100
+Variaveis em timers.c:               = 6
+Variaveis da heap3:                  = 10
+xLastTime:                           = 2
+TOTAL:                               = 127
