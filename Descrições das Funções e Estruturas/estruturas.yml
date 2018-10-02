@@ -1,0 +1,130 @@
+TAMANHO DOS TIPOS E ESTRUTURAS::
+
+uint32_t: 4B (Unsigned long) (portmacro.h)
+uint16_t: 2B (Unsigned short) (portmacro.h)
+uint8_t: 1B (Unsigned char) (portmacro.h)
+StackType_t (portSTACK_TYPE): 1B (uint8_t) (portmacro.h)
+UBaseType_t: 1B (Unsigned char) (portmacro.h)
+TickType_t**: 2B (uint16_t) (portmacro.h)
+
+QueueHandle_t: 2B (ponteiro para void*) (queue.h)
+
+Queue_t(xQUEUE): 31 bytes (queue.c)
+
+TaskHandle_t: 2B (Ponteiro pra void)(tasks.h)
+
+Timer_t(xTIMER): 19B (timers.c)
+
+ListItem_t: 10B (list.h)
+MiniListItem_t: 6B (list.h)
+List_t: 9B (list.h)
+
+*O tamanho de um ponteiro no arduino é de 2 Bytes.
+** Pode ser uint16_t ou uint32_t dependendo da definição de configUSE_16_BIT_TICKS.
+
+
+
+DESCRIÇÃO DAS ESTRUTURAS: (#ND significa não definido na configuação padrão)
+
+Sobre os valores de checagem de integridade das estruturas de lista:
+Caso configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES for declarado, variáveis serão
+adicionadas as estruturas de lista para realizar checagens de integridade, ajudando
+no processo de debug. Estas variáves são atribuidas nos momentos em que as listas
+e os itens das listas são criados.
+
+Sobre o prefixo configLIST_VOLATILE: (list.h, 106:0)
+Como os membros das estruturas das listas são modificadas por interrupções, deveriam ser
+declarados voláteis. Porém, elas só são modificadas de maneira funcionalmente atômica
+(Dentro de regiões críticas ou com o escalonador suspenso) e são ou passadas por referência
+para uma função ou indexadas através de uma variável volátil. Portanto, em todos casos
+de usos testados até agora, o qualificador volatile pode ser omitido para se obter uma
+pequena melhora de performance sem resultados adversos no comportamento. A medida que
+as tecnologias de compilação avançam ou caso seja utilizada "aggressive cross module optimisation"
+é possível que o qualificador volátil seja necessário para correto funcionando. Então, basta defini-lo
+na FreeRTOSConfig.h -> #define configLIST_VOLATILE volatile
+
+ListItem_t: 10B (list.h)
+  #ND(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;)
+  (2B) configLIST_VOLATILE TickType_t xItemValue;
+  (2B) struct xLIST_ITEM* configLIST_VOLATILE pxNext;
+  (2B) struct xLIST_ITEM* configLIST_VOLATILE pxPrevious;
+  (2B) void *pvOwner;
+  (2B) void *configLIST_VOLATILE pvContainer;
+  #ND(2B) listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue2);
+
+MiniListItem_t: 6B (list.h)
+  #ND(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;);
+  (2B) configLIST_VOLATILE TickType_t xItemValue;
+  (2B) struct xLIST_ITEM* configLIST_VOLATILE pxNext;
+  (2B) struct xLIST_ITEM* configLIST_VOLATILE pxPrevious;
+
+List_t: 9B (list.h)
+  #ND(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;);
+  (1B) configLIST_VOLATILE UBaseType_t uxNumberOfItems; #quantos itens tem na fila.
+  (2B) ListItem_t * configLIST_VOLATILE pxIndex; #Usado para passar pela lista. Aponta para o ultimo item retornado pela chamada listGET_OWNER_OF_NEXT_ENTRY.
+  (6B) MiniListItem_t xListEnd; #Item da lista que contém o maior valor possível significando que chegou no fim da lista.
+  #ND(2B) listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue2);
+
+Sobre portSTACK_GROWTH:
+É definido
+
+TCB_t(tskTCB): 41B (tasks.c)
+  (2B) volatile stackType_t pxTopOfStack; #Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
+  #ND(0) portUSING_MPU_WRAPPERS #Usado para a proteção da memória, porém no arduino não é utilizada. Se fosse definido as xMPU_SETTINGS deveriam ser definidas como parte da port layer, e teria uma flag que diria se a pilha foi alocada dinâmicamente ou estaticamente.
+  (10B) ListItem_t xGenericListItem; #É o que define o estado da tarefa. Se a lista que referencia esse item é a lista de pronto, então ele está pronto para ir para o escalonador.
+  (10B) ListItem_t xEventListItem; #Usado para refenciar uma tarefa de uma lista de eventos, isso quer dizer que, por exemplo, se uma tarefa está esperando um dado chegar em uma fila, então sua lista de eventos é referenciada da lista de filas esperando para receber.
+  (1B) UBaseType_t uxPriority; #Prioridade da tarefa. 0 é a prioridade mais baixa.
+  (2B) StackType_t *pxStack; #Aponta para o começo da pilha.
+  (8B) char pcTaskName[configMAX_TASK_NAME_LEN] #Nome descritivo da tarefa, tem no máximo tamanho 8(pode mudar conforme FreeRTOSConfig.h)
+  #-1 portSTACK_GROWTH { Já definido
+    (2B) StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha.
+    }
+  }
+  #ND(0) portCRITICAL_NESTING_IN_TCB{ definição que pertimirá ou não o critical nesting.
+    (1B) UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
+    guardar esse valor.volatile
+    }
+  }
+  #0 configUSE_TRACE_FACILITY{ Grava a sequencia em que as tarefas recebem o tempo de processamento do microprocessador.
+    (1B) UBaseType_t uxTCBNumber { Contador de quantidade de vezes que TCBs foram criados. Serve para ajudar debuggers para saber quando uma tarefa foi
+    deletada e recriada.
+    }
+    (1B) UBaseType_t uxTaskNumber { Numero utilizado por códigos de rastro (trace) de terceiros.
+    }
+  }
+  #1 configUSE_MUTEXES{ Caso o uso de mutexes esteja ligado.
+    (1B) UBaseType_t uxBasePriority{ a ultima prioridade atribuida a tarefa. Usado pelo mecanismo de herança de prioridades.
+    }
+    (1B) UBaseType_t uxMutexesHeld{ Numero de mutexes que a tarefa está segurando (não temos certeza, entretanto).
+    }
+  }
+  #ND(0) configUSE_APPLICATION_TASK_TAG{ Habilita ou não o uso de valores de tag para uma tarefa. Tag é um valor que pode ser atribuido a cada
+  tarefa e pode ser usado pela aplicação para macros de tracing. O kernel não utiliza esse recurso. Esse valor pode ser qualquer coisa,
+  até uma função de callback.
+    (1B) TaskHookFunction_t { é uma variável que recebe um valor, passado por parametro como ponteiro para void, mas que é do tipo BaseType_t.
+    o parâmetro pode ser usado para passar qualquer valor para a função. } pxTaskTag{ valor dado a tag da tarefa.
+    }
+  }
+  #ND(0) configNUM_THREAD_LOCAL_STORAGE_POINTERS{ Usado para guardar um valor dentro do TCB. Esse valor é específico da thread em questão. Alternativa
+  para alguns casos de variáveis globais em ambientes multithreads.
+    (2B) void *pvThreadLocalStoragePointers[ configNUM_THREAD_LOCAL_STORAGE_POINTERS]{ array de ponteiros para void, usado para guardar valores.
+    possui uma função específica para definir e ler um valor no array de ponteiros (vTastkSetThreadLocalStoragePointer() e
+    pvTastkGetThreadLocalStoragePointer()).
+    }
+  }
+  #ND(0) configGENERATE_RUN_TIME_STATS{ usado para coletar informações acerca do uso do processamento que foi usado por cada tarefa (tempo absoluto e percentual).
+  A função vTaskGetRunTimeStats() é usada para mostrar essas informações em um formato tabular.
+    (4B) uint32_t ulRunTimeCounter{ Quantidade de tempo que a tarefa passou no estado running.
+    }
+  }
+  #ND(0) configUSE_NEWLIB_REENTRANT{ Habilita o uso de uma biblioteca popular para sistemas embarcados (NewLib). #ND.
+    (0B) struct _reent xNewlib_reent{ Aparentemente não está definido em lugar algum. Portanto o dono da aplicação deve definir essa estrutura.
+    }
+  }
+  #ND(1) configUSE_TASK_NOTIFICATIONS{ Definido caso a funcionalidade de notificações diretas das tarefas deseja ser usada. Cada tarefa consome 8 bytes adicionais
+  de RAM quando essa funcionalidade está incluida (Conferir se no arduino AVR é 8bytes mesmo).
+    (4B) volatile uint32_t ulNotifiedValue{ Variável que armazenará os valores das notificações.
+    }
+    (2B) volatile eNotifyValue eNotifyState{ Variável que guarda o estado da notificação.
+    }
+  }

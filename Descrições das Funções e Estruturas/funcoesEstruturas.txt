@@ -1,0 +1,350 @@
+#### ESTRUTURAS:
+
+
+
+
+
+(tasks.c) eNotifyValue{ é um enumerador, onde
+  eNotWaitingNotification é 0
+  eWaitingNotification é 1
+  eNotified é 2
+}
+
+(portmacro.h) MemoryRegion_t (xMemoryRegion){
+  void *pvBaseAddress {Ponteiro para o endereço base da região de memória.}
+  uint32_t ulLengthInBytes {Comprimento em bytes}
+  uint32_t ulParameters {Define como a tarefa é permitida acessa a região da memória, e pode receber um OR bit a bit dos seguintes valores:
+    portMPU_REGION_READ_WRITE
+    portMPU_REGION_PRIVILEGED_READ_ONLY
+    portMPU_REGION_READ_ONLY
+    portMPU_REGION_PRIVILEGED_READ_WRITE
+    portMPU_REGION_CACHEABLE_BUFFERABLE
+    portMPU_REGION_EXECUTE_NEVER
+  }
+}
+
+(queue.c) Queue_t (xQUEUE){
+  Caso seja mutex, haverá uma constante que chama queueQUEUE_IS_MUTEX, que nada mais é que se for um mutex, a cabeça da fila é usada como NULL, dizendo
+  que é mutex.
+  (1B) int8_t *pcHead{ Aponta para o começo da area de armazenamento da Queue. Se for mutex, será usado como uxQueueType.
+  }
+  (2B) int8_t *pcTail{ Aponta para o byte no fim da área de armazenamento da Queue. É alocado um byte a mais só pra isso. Se for um mutex, será chamado de
+  pxMutexHolder.
+  }
+  (2B) int8_t *pcWriteTo{ Aponta para o próximo espaço vazio da área de armazenamento.
+  }
+  (1B) union{ Usado pra reduzir memória.
+    int8_t *pcReadFrom{ Aponta para o ultimo lugar que um item enfileirado foi lido quando a estrutura é usada como uma fila.}
+    UBaseType_t uxRecursiveCallCount{ Mantém um contador do nível da recursão dos mutexes, e.g. quantas vezes aquele mutex foi pego na recursão
+    quando a estrutura está sendo usada como mutex.
+  }
+  (26B)List_t xTasksWaitingToSend lista de todas as tarefas que estão bloqueadas aguardando para escreverem nessa fila. (São guardadas em ordem de prioridade).
+  (26B)List_t xTasksWaitingToReceive lista de todas as tarefas que estão bloqueadas aguardando para lerem dessa fila. (Também em ordem de prioridade).
+  (1B)UBaseType_t uxMessagesWaiting Número de mensagens que estão na fila.
+  (1B)UBaseType_t uxLength comprimento da fila. (É definido pelo numero de dados que ela guardará, não o número de bytes).
+  (1B)UBaseType_t uxItemSize tamanho de cada item que essa fila irá manter.
+  (1B)UBaseType_t xRxLock Guarda o número de dados recebidos da fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+  (1B)UBaseType_t xTxLock Guarda o número de dados colocados na fila enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+  #ND(0) configUSE_TRACE_FACILITY{
+    UBaseType_t uxQueueNumber;
+    UBaseType_t ucQueueType;
+  }
+  configUSE_QUEUE_SETS{
+    (2B) QueueDefinition *pxQueueSetContainer{ Estou em dúvida, se ele segura as queues, ou seja se ele é um container dessa queue, ou se ele aponta pra qual queue esse carinha
+    aqui pertence.
+    }
+  }
+}(63B)
+
+(timers.c) Timer_t(xTIMER){
+  (2B) const char *pcTimerName;
+  (10B) ListItem_t xTimerListitem;
+  (2B) TickType_t xTimerPeriodInTicks;
+  (1B) UBaseType_t uxAutoReload;
+  (2B) void *pvTimerID;
+  (2B) TimerCallbackFunction_t pxCallbackFunction;
+  #(0) configUSE_TRACE_FACILITY
+    (2B)  UBaseType_t uxTimerNumber;
+} (19B)
+
+
+
+#### FUNÇÕES:
+
+(Tasks.c) VtaskStartScheduler{
+   Cria a tarefa idle guardando ou não o valor dela, de acordo com a constante INCLUDE_xTaskGetIdleHandle.
+   xTaskCreate();{ Retorna pdPASS se a tarefa foi criada corretamente, errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY caso contrário.
+   }
+   configUSE_TIMERS{ Usada para incluir a funcionalidade de timers de software. 1 para incluir, 0 caso contrário.
+   }
+   xTimerCreateTimerTask(){ Cria a tarefa daemon que cuida dos timers.
+   }
+}
+
+(tasks.c) XtaskCreate{ Definida como XtaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate,
+ os outros dois são o ponteiro para o  buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois ultimos parametros
+ são passados como NULL)
+   configASSERT():{ O primeiro irá verificar se o ponteiro não é nulo. O segundo provavelmente é para verificar
+   se a prioridade da tarefa a ser criada é menor que a maior prioridade possível. É usado um bitwise and com a
+   constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
+   }
+   prvAllocateTCBAndStack() { }
+}
+
+(FreeRTOS.h) configASSERT{ Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
+a debugação, pois indica o arquivo e a linha do erro.
+}
+
+(tasks.c) prvAllocateTCBAndStack{
+   Se a pilha (portSTACK_GROWTH) cresce para baixo( < 0), então aloca a pilha depois o tcb. Caso contrário (> 0) aloca o tcb depois a pilha.
+   No nosso caso, a pilha cresce pra baixo. Nesse caso não faz muita diferença, uma vez que tudo é controlado pelo próprio malloc. Porém em outras
+   arquiteturas, isso deve ser considerado.
+
+   Caso a pilha cresça para baixo:
+     -Aloca espaço para o TCB utilizando pvPortMalloc()
+     -Se alocado o TCB com sucesso, aloca o espaço para a pilha da tarefa utilizando pvPortMallocAligned(), armazenando no TCB o endereço para a
+        base da pilha.
+     -Caso não seja possível alocar a pilha, libera o espaço anteriormente alocado para o TCB e o seta como NULL
+
+   Caso a pilha cresça para cima:
+     -Aloca o espaço para a pilha da tarefa utilizando pvPortMallocAligned()
+     -Se alocada a pilha com sucesso, aloca espaço para o TCB utilizando pvPortMalloc()
+     -Caso o TCB tenha sido alocado com sucesso, armazena o ponteiro para o inicio da pilha no TCB, do contrário, libera o espaço alocado para
+       a pilha.
+
+   *De onde vem a memória depende da implementação de pvPortMalloc
+   }
+
+  (heap_3.c) pvPortMalloc{
+    -Suspende o escalonador através de uma chamada de vTaskSuspendAll
+    -Aloca um bloco do tamanho em bytes passado via parâmetro através de uma chamada de malloc, atribuindo à variável de retorno
+      o retorno da chamada, que é um ponteiro para o início do bloco.
+    -Chama a macro de tracing traceMALLOC, passando como parametro o ponteiro para inicio do bloco e tamanho do bloco em bytes
+
+  }
+
+  (tasks.c) vTaskSuspendAll {
+    Suspende o escalonador sem desabilitar as interrupções, trocas de contexto não ocorrem enquanto
+    o escalonador estiver suspenso. Ticks ficarão pendentes até uma chamada de xTaskResumeAll.
+
+    -Incrementa um contador chamado ++uxSchedulerSuspended, o que indica que o escalonador foi suspenso.
+
+
+    Explicação da atomicidade: http://goo.gl/wu4acr
+  }
+
+  (tasks.c) xTaskResumeAll (MPU_xTaskResumeAll){
+    -Garante através de uma chamada de configASSERT (passando como parâmetro uxSchedulerSuspended) que a chamada para xTaskResumeAll
+      tenha uma chamada passada de vTaskSuspendAll correspondente.
+
+    *É possível que enquanto o escalonador estava suspenso, uma tarefa tenha sido removida de uma lista de eventos por causa de um ISR (Interruption service routine).
+    Se for o caso, esta tarefa foi adicionada a xPendingReadyList. Assim que o escalonador é resumido, é seguro mover todas as tarefas dessa lista para suas listas
+    de "pronta" correspondentes.
+
+    -Desabilita interrupções através de uma chamada de taskENTER_CRITICAL
+    -Decrementa o valor de uxSchedulerSuspended, indicando que o escalonador foi resumido
+    -Garante que o escalanonador não está mais suspenso e que hajam tarefas, caso contrário, usa mtCOVERAGE_TEST_MARKER().
+    -Enquanto houverem tarefas na lista de tarefas pendentes (xPendingReadyList) (Checa com listLIST_IS_EMPTY()):
+      *Pega o endereço do TCB da tarefa com listGET_OWNER_OF_HEAD_ENTRY()
+      *Remove o xEventListItem e o xGenericListItem do TCB de suas respectivas listas com uxListRemove()
+      *Adiciona a tarefa a lista de pronto com prvAddTaskToReadyList();
+      *Se a tarefa movida para pronto tem prioridade maior que a tarefa atual(pxCurrentTCB->uxPriority), então uma troca de contexto deve
+      ser realizada (xYieldPending = pdTRUE)
+  }
+
+  (list.h) listLIST_IS_EMPTY(){
+    Macro para checar se uma lista está vazia, apenas vê se o número de itens é 0.
+    Retorna um BaseType_t.
+  }
+
+  (list.h) listGET_OWNER_OF_HEAD_ENTRY(){
+    Macro que obtém o endereço do dono do primeiro elemento numa lista, no escalonador, geralmente um TCB.
+    Faz isso acessando o dono do último elemento na listas
+    (como faz isso usando end->next->owner?)
+  }
+
+  (list.c) uxListRemove(){
+    remove o item passado por parâmetro de sua respectiva lista (o item tem o ponteiro para sua lista).
+    Retorna o número de elementos que permanecem na lista.
+    -Obtém a lista a qual o item pertence do própio item
+    -arruma os encadameantos da lista (liga os elementos anterior e próximo do item)
+    -mtCOVERAGE_TEST_DELAY (usado durante testes de cobertura de decisão)
+    -Garante que o índice da lista (pxIndex) seja deixado apontando para um item válido:
+      Caso o índice esteja apontando para o item removido, aponta para o anterior dele.
+      Caso contrário, apenas mtCOVERAGE_TEST_MARKER
+    -Seta o container do item (Lista ao qual pertence) como NULL
+    -Decrementa o número de itens da listas
+    -Retorna o número de itens restantes.
+  }
+
+  (tasks.c) prvAddTaskToReadyList(){
+    Macro para adicionar a tarefa do TCB passado como parâmetro no fim da lista de pronto apropriada.
+    *Macro de tracing traceMOVED_TASK_TO_READY_STATE
+    *Verifica e possivelmente atualiza a prioridade da maior tarefa pronta com uma chamada para taskRECORD_READY_PRIORITY
+    *Adiciona o TCB da tarefa a fila de tarefas prontas com uma chamada de vListInsertEnd()
+  }
+
+  (tasks.c) taskRECORD_READY_PRIORITY(){
+    Macro para atualizar a variável uxTopReadyPriority, que guarda a prioridade da tarefa pronta com maior
+    prioridade
+    *Se a a prioridade da tarefa passada como parâmetro for maior que a guardada em uxTopReadyPriority,
+    atualiza uxTopReadyPriority para a prioridade passada como parametro.
+  }
+
+  (list.c) vListInsertEnd(){
+    Insere um item no final da lista passada como parâmetro
+    -Checa a integridade da lista e do item que está sendo inserido comparando valores de sua estrutura com uma constante, através de chamadas para
+    listTEST_LIST_INTEGRITY() e listTEST_LIST_ITEM_INTEGRITY().
+    -Atribui o próximo do elemento sendo inserido como o pxIndex da fila.
+    -Atribui o anterior do elemento sendo inserido como o anterior do pxIndex da fila.
+    -mtCOVERAGE_TEST_DELAY (usado durante testes de cobertura de decisão)
+    -Atribui ao próximo do anterior do pxIndex e ao anterior do pxIndex o novo item
+    -Salva no item em qual container (lista) ele se encontra
+    -incrementa o número de elementos na fila
+  }
+
+  (list.h) listTEST_LIST_INTEGRITY(){
+    Macro que checa a integridade da lista passada como parâmetro. Faz isso comparando um valor da estrutura lista a um valor predeterminado, pode conseguir detectar
+    sobrescrita dos valores na memória.
+  }
+
+  (list.h) listTEST_LIST_ITEM_INTEGRITY(){
+    Macro que checa a integridade do item de lista passado como parâmetro. Faz isso comparando um valor da estrutura do item a um valor predeterminado,
+    pode conseguir detectar sobrescrita dos valores na memória.
+  }
+}
+
+--:)
+
+(timers.c) xTimerCreateTimerTask{
+    - prvCheckForValidListAndQueue(){ Entra na região crítica e verifica se a queue já foi inicializada, em caso negativo, inicializa as listas de timer e cria
+    a fila do timer.
+    }
+    - Se a fila foi inicializada e INCLUDE_xTimerGetTimerDaemonTaskHandle é definido como 1, então a função de criar a tarefa daemon dos timers salvará o handle dela. Caso
+      contrário, criará a fila sem salvá-lo.
+    - Retorna pdPASS se conseguiu criar a tarefa e pdFAIL caso contrário.
+}
+
+(timers.c) prvCheckForValidListAndQueue{ Verifica se a lista dos timers ativos que são referenciados, junto da fila usada para se comunicar com os timers de
+software foram inicializados. Se não estiverem, cria e inicializa tudo.
+  - (task.h) taskENTER_CRITICAL(){ Entra na região crítica. Definida como (portmacro.h) portENTER_CRITICAL(), que nada mais é que um código em assembly para evitar interrupções (sejam elas globais ou interrupções
+    abaixo de uma certa prioridade), se a funcionalidade configMAX_SYSCALL_INTERRUPT_PRIORITY não estiver sendo usada, então serão desabilitadas as interrupções globalmente.
+  }
+  - Se a fila do timer ainda não foi inicializada/criada, crie duas listas de timer e diga que essas listas são as listas atuais, depois crie a fila do timer.
+  - chama vListInitialise(); para fazer os apontamentos e todo o resto necessário para iniciar as listas do timer.
+  - chama xQueueCreate(); para criar a fila do timer, com suas estruturas.
+  - Se o tamanho do registro das filas (configQUEUE_REGISTRY_SIZE) for maior que 0, então a fila atual será adicionada as filas já existentes.
+  - configQUEUE_REGISTRY_SIZE{ Usado para melhor visualização na hora de debugar. Permite que a fila tenha um nome e contém a informação necessária para o debugger encontrar cada fila e semáforo registrado.
+    }
+
+}
+
+(list.c) vListInitialise{ Recebe como parâmetro uma estrutura do tipo List_t e vai ajustar os ponteiros, tendo um ponteiro que marca o fim da fila (e.g. aponta para o fim dela),
+irá colocar um valor muito grande no fim, para que permaneça no final, assim o fim da fila sempre ficara lá. além de colocar o proximo e anterior itens da fila apontando
+para o fim (provavelmente para dizer que a lista não contém nenhum membro).
+}
+
+(list.h) listLIST_IS_EMPTY(){ Recebe como parâmetro uma lista e verifica se o numero de itens nela é 0, se sim retorna 1, se não 0
+}
+
+(list.h) listGET_OWNER_OF_HEAD_ENTRY{ Recebe como um parâmetro uma lista da qual o dono do primeiro item deve ser retornado. Retorna o membro do primeiro membro na lista.
+}
+
+(list.c) uxListRemove(){ Remove o tcb de sua respectiva lista.
+  - Pega de qual lista esse item pertence.
+  - Troca os apontamentos. (O anterior aponta pro próximo e o proximo aponta pro anterior, assim esse item sai do encadeamento).
+  - Verifica se o apontamento a esquerda (?) está apontando para um valor válido.
+  - Se não estiver, faz ele apontar para a esquerda.
+  - Artera a variavel de qual lista ele pertence para null.
+  - Diminui a quantidade de itens e retorna ela.
+}
+
+(tasks.c) xTaskRemoveFromEventList(){ retire a tarefa de maior prioridade da lista de eventos esperando para escrever na fila e como ele pode escrever agora nessa fila, então
+o seu identificador de tcb será movido da lista de bloqueados para a lista de pronto. Assim como a lista de bloqueados, a lista de eventos também le ordenada por ordem de prioridades.
+  - Tenta atribuir listGET_OWNER_OF_HEAD_ENTRY() para pegar o primeiro membro da lista de eventos na qual está o TCB.
+  - Verifica se ele conseguiu atribuir.
+  - Chama uxListRemove() para a lista a qual o tcb atribuido pertence, para tirar o tcb dessa lista, caso o escalonador não esteja suspenso.
+  - Se ele estiver suspenso, então chama uma funcão que coloca o TCB na lista de prontos. Caso contrário, o coloca em uma lista de tarefas que estão prontas para irem para o estado de pronto.
+  - Se o TCB atual, removido da lista em que estava para a lista de pronto tem maior prioridade que o tcb correspondendo a tarefa, então uma troca de contexto deve ocorrer. Assim
+    retorna xReturn como true (que significa que a tarefa tem maior prioridade) e xYieldPending como true (significando que deve ocorrer uma troca de contexto).
+  - Tem algo sobre usar tickless idle, entretanto não entendi direito. (???)
+  }
+
+(queue.c) xQueueGenericReset{ Recebe como parâmetro um handle de queue e um basetype_t
+  - Vai fazer um ponteiro de queue_t apontar para o ponteiro de xQueue.
+  - Verifica se o ponteiro não é nulo.
+  - Entra na região crítica
+  - Altera o rabo da fila para a primeira posição não utilizada da fila.
+  - Atribui 0 para as mensagens esperando.
+  - Diz que é pra começar a ler da cauda e escrever pela cabeça
+  - Define que a quantidade de itens que foram lidos/removidos são -1, significando que a queue não está bloqueada.
+  - Se xNewQueue estiver pdFalse, quer dizer que ele não está reiniciando a fila pela primeira vez, então podem existir tarefas bloqueadas esperando para ler/escrever da fila.
+    Elas se manterão bloqueadas, mas se possuem tarefas bloqueadas esperando para escrever na fila, então uma deve ser escolhida para sair do estado de bloqueado, uma vez que será
+    possível escrever nela.(portmacro.h)
+  - ele chama listLIST_IS_EMPTY() para ver se a lista de mensagens esperando para escrever está vazia, se não está vazia ela tenta remover essa tarefa da lista (para a lista de pronto) que pertence através de xTaskRemoveFromEventList();
+  - Se a tarefa removida da lista tem maior prioridade, então é necessário que a tarefa que está agora ceda o processador para a nova tarefa. Ela faz isso liberando o processador, onde o escalonador escalonará a nova tarefa.
+  - Se xNewQueue estiver pdTrue, então é necessário criar as listas de tarefas que estão esperando para escrever e ler dessa fila.
+  - Saia da região crítica.
+  - Retorna pdPASS avisando que foi possível realizar tudo o que tinha para fazer.
+}
+
+(queue.c) xQueueCreate()(xQueueGenericCreate){ Na verdade é usada assim para que só precise receber o valor do tamanho da queue e seu comprimento, mas na verdade ela chama a xQueueGenericCreate,
+dando o valor de queueQUEUE_TYPE_BASE (que é de uso interno apenas, mas é definido como 0).
+  Queue_t *pxNewQueue; { um ponteiro para a nova queue que será criada (com o malloc). }
+  size_t xQueueSizeInBytes;
+  QueueHandle_t xReturn;
+  - Vai verificar se o tamanho da fila é maior que 0, para evitar erros.
+  Se o tamanho de cada item for 0, então ele diz que não vai haver uma área de armazenamento de queue. Possívelmente para poder acessar os metadados da fila.
+  Caso contrário, vai diser que o tamanho da fila em bytes é um a mais do que o original para fazer as checagens mais rápido.
+  - Aloca a fila com o pvPortMalloc(), que nada mais é do que um malloc normal.
+  - Verifica se consegue alocar a nova fila, em caso positivo:
+  - Se o tamanho do item for 0, ele vai fazer com que o ponteiro pcHead aponte para o início da queue,
+  para ter certeza que está dentro da memória.
+  - Caso contrário, fará com que pcHead aponte para o início da área de armazenamento, pulando os dados estruturais da fila.
+  - Atualiza os dados estruturais da fila, tais como uxLenght e uxItemSize e chama xQueueGenericReset();
+  - Se estiver usando tracing, atribui ao tipo da queue o valor de ucQueueType (nesse caso é um unsigned char).
+  - Se estiver usando conjunto de queues, então atribua ao container dessa queue null, isso quer dizer que ela não pertence a nenhum conjunto de filas.
+  - Cria um tracing, se houver.
+  - Atribui à variavel de controle a nova queue e retorna ela para a função que a chamou.
+}
+
+(semphr.h) xSemaphoreTake(){
+  Na verdade é uma definição pra xQueueGenericReceive que recebe um QueueHandle_t do semaforo, null, o tempo de bloqueio e pdFALSE;
+}
+
+(queue.c) xQueueGenericReceive(){
+  - Verifica se a fila existe;
+  - Entra na região crítica.
+  -
+}
+
+**Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
+que podem ser redefinidas para prover funcionalidades de tracing. As macros vazias não afetam o funcionamento da aplicação.
+
+#### MAPAS DE FUNÇÕES:
+
+vTaskStartScheduler()
+  xTaskCreate() (xTaskGenericCreate)
+    configASSERT()
+    configASSERT()
+    prvAllocateTCBAndStack()
+      pvPortMalloc()
+        vTaskSuspendAll()
+        traceMALLOC()
+        xTaskResumeAll()
+          configASSERT()
+          taskENTER_CRITICAL()
+            listLIST_IS_EMPTY()
+            listGET_OWNER_OF_HEAD_ENTRY()
+            uxListRemove()
+              mtCOVERAGE_TEST_DELAY()
+              mtCOVERAGE_TEST_MARKER()
+              prvAddTaskToReadyList()
+                traceMOVED_TASK_TO_READY_STATE()
+                taskRECORD_READY_PRIORITY()
+                vListInsertEnd()
+                  listTEST_LIST_INTEGRITY()
+                    configASSERT()
+                  listTEST_LIST_ITEM_INTEGRITY()
+                    configASSERT()
+                  mtCOVERAGE_TEST_DELAY()
