@@ -72,11 +72,11 @@ Defining configGENERATE_RUN_TIME_STATS as 1 (False): 8
 -> S ulTotalRunTime: uint32_t(4)                             = 4
 
 timers.c (Se estiverem inclusos): 24
--> S xActiveTimerList1: List_t(9B) (OT)               = 9
--> S xActiveTimerList2: List_t(9B) (OT)               = 9
--> S pxCurrentTimerList: List_t*(2B)                  = 2
--> S pxOverflowTimerList: List_t*(2B)                 = 2
--> S xTimerQueue: QueueHandle_t(2B)                   = 2
+-> S xActiveTimerList1: List_t(9B) (OT)                      = 9  -> Só são criadas se os timers forem inicializados (prvCheckForValidListAndQueue)
+-> S xActiveTimerList2: List_t(9B) (OT)                      = 9
+-> S pxCurrentTimerList: List_t*(2B)                         = 2
+-> S pxOverflowTimerList: List_t*(2B)                        = 2
+-> S xTimerQueue: QueueHandle_t(2B)                          = 2
 Including xTimerGetTimerDaemon<Arduino_FreeRTOS.h>TaskHandle (False):
 -> xTimerTaskHandle: TaskHandle_t(2B)                 = 2
 
@@ -108,3 +108,39 @@ Variaveis em timers.c:               = 6
 Variaveis da heap3:                  = 10
 xLastTime:                           = 2
 TOTAL:                               = 127
+
+Funcoes listadas no .elf incluindo apenas <Arduino_FreeRTOS.h>: 29
+xTaskGetTickCount
+xQueueGenericSend
+xTaskGenericCreate
+xTaskRemoveFromEventList
+xTaskCheckForTimeOut
+xTaskResumeAll
+xTimerGenericCommand
+vPortYieldFromTick
+vTaskPlaceOnEventList
+vPortFree
+vListInsertEnd
+vApplicationMallocFailedH
+vTaskSuspendAll
+vPortYield
+vListInsert
+prvAddCurrentTaskToDelaye
+prvInsertTimerInActiveLis
+prvUnlockQueue
+prvSwitchTimerLists
+prvTimerTask
+pvPortMalloc
+uxListRemove
+memcpy
+malloc
+memset
+main
+free
+__vector_6
+__vector_16
+
+Funcoes adicionais ao incluir "vTaskStartScheduler": 3
+prvIdleTask
+vListInitialise
+vTaskStartScheduler
