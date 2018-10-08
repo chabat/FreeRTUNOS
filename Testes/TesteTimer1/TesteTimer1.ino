@@ -1,6 +1,5 @@
-#include <FreeRTOS_AVR.h>
-#include <basic_io_avr.h>
-
+#include <Arduino_FreeRTOS.h>
+#include <timers.h>
 /* 
  * Programa para testar o uso de timers em uma aplicaçao  
  */

@@ -1,0 +1,98 @@
+MUTEXES:
+Para testar os mutexes, foi usado um for que chama xSemaphoreTake para cada semáforo.
+O custo em memória total(CT) para criar cada semáforo é 33 bytes.
+Entretanto a estrutura mutex_t tem somente 31 bytes.
+Os outros 2 bytes são
+
+--
+
+Aparentemente os mutexes não bloqueiam de verdade a tarefa, ele só coloca que aquele
+tcb tá usando o mutex, mas não tem aquele negócio de colocar na fila, pra que asim que
+libere, o primeiro que quer, com maior prioridade usar vai conseguir. Ele somente garante
+que uma tarefa apenar entrará lá.
+
+--
+
+Criei uma tarefa gatekeeper para não ter que usar mais mutexes, e pelo que eu vi,
+com poucos mutexes apenas uma tarefa pega todos eles e solta.
+Aumentando o numero de mutexes para 5, as tarefas começam a intercalar, entretanto uma
+sempre pega todos os mutexes e depois os solta, aí vem a outra e faz a mesma coisa.
+Aumentando mais o numero, 6 por exemplo, uma tarefa somente executa.
+Provavelmente tem a ver com o fato de que com 5 mutexes
+
+--
+
+Agora vou testar com o aumento de tarefa, quantos mutexes serão possíveis usar, dado uma
+quantidade de tarefas.
+Cada tarefa teria 200 bytes de pilha.
+
+Cada tarefa criada ocupa o tamanho dado a ela + 41 bytes + 4 bytes, pois tem 2 alocações (pilha e tcb) e cada alocação usa 2 bytes;
+
+|   Tarefas   |   Max Mutexes   | Memória Livre Antes de criar os mutexes | Memoria livre antes de iniciar o esc
+|   1         |   19            | 1206                                    | 571
+|   2         |   15            | 1061                                    | 566
+|   3         |   11            | 924                                     | 561
+|   4         |   7             | 787                                     | 556
+|   5         |   3             | 650                                     | 551
+|   6         |   0             | ---                                     | ---
+
+$FUNÇÕES:
+
+xSemaphoreCreateMutex():
+{
+  Na verdade é somente uma definição, a função real é xQueueCreateMutex(queueQUEUE_TYPE_MUTEX)
+  - Cria uma nova fila e atribui a um ponteiro.
+  - Se foi possível criar a queue, ele irá atribuil NULL para pcTail, o que indica que nenhuma tarefa
+  pegou aquele mutex.
+  - Dirá que a fila é um mutex, atribuindo a pcHead NULL.
+  - Coloca NULL em pcWriteTo e pcReadFrom, pois não terá nenhum dado nessas variáveis.
+  - Como cada mutex tem um tamanho de um e nenhum dado é copiado a ele, as variáveis uxMessagesWaiting
+  e uxItemSize recebem o valor 0 e uxLength recebe valor 1.
+  - Coloca as filas como desbloqueadas.
+  - Inicialisa as listas de eventos com o valor correto através de vListInitialise (xTasksWaitingToSend e xTasksWaitingToReceive).
+  - Inicializa o semaforo com um item lá, dizendo que nenhuma tarefa pegou o semáforo, através da função xQueueGenericSend.
+  - Retorna o handle da queue.
+}
+
+xQueueGive():
+{
+  - Se a quantidade de mensagens na fila forem menor que o tamanho dela, então é possível colocá-la lá.
+  - Se o tipo da fila é um mutex, então ele vai chamar a função xTaskPriorityDisinherit para o pxMutexHolder
+  e vai dar que o pxMutexHolder daquela fila é NULL.
+  - Aumenta a quantidade de mensagens esperando por algum dado para chegar na fila, então essa tarefa será desbloqueada.
+  - Se ao tentar remover da lista de eventos retornar pdFalse, então a tarefa tem maior prioridade, deste modo deve-se
+  liberar o uso do processador imediatamente.
+  Se a fila estiver cheia:
+    - Se não houver a possibilidade de esperar, então ela vai sair da região crítica e retornar errQUEUE_FULL;
+    - Se houver, então será setado um timeout para a tarefa.
+}
+
+xTaskPriorityDisinherit():
+{
+  - Vai decrementar a quantidade de mutexes que o tcb atual segura.
+  - Se a prioridade dele mudou, então ele vai devolver a prioridade daquele tcb para a sua prioridade original,
+  removendo ele da lista de estado a qual ele pertence e resetando a prioridade dele através de taskRESET_READY_PRIOTIRY.
+  - Atribua a prioridade base daquela tarefa.
+  - Coloque ele de novo na lista de eventos, agora com sua prioridade base através de listSET_LIST_ITEM_VALUE.
+  - Adicione ele à lista de prontos.
+  - Retorne pdTRUE.
+}
+
+listSET_LIST_ITEM_VALUE():
+{
+  Vai atribuir o que está em xItemValue de pxListItem o valor xValue.
+}
+--
+
+#TIMERS
+
+Aparentemente uma tarefa usa muito mais que a 241 bytes, o que pode ser evidenciado no teste anterior.
+Comecei a estudar timers, testando o aumento de tarefas com a quantidade de timers, o que se pode
+perceber, com a tarefa de tamanho 200 -- simulando alguma funcionalidade, é:
+
+|   Tarefas   |     Timers      |
+|     1       |       37        |
+|     2       |       25        |
+|     3       |       14        |
+|     4       |        4        |
+|     5       |        0        |

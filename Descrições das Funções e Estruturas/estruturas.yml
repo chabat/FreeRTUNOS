@@ -19,7 +19,7 @@ ListItem_t: 10B (list.h)
 MiniListItem_t: 6B (list.h)
 List_t: 9B (list.h)
 
-*O tamanho de um ponteiro no arduino é de 2 Bytes.
+* O tamanho de um ponteiro no arduino é de 2 Bytes.
 ** Pode ser uint16_t ou uint32_t dependendo da definição de configUSE_16_BIT_TICKS.
 
 

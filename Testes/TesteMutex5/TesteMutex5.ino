@@ -25,8 +25,8 @@ typedef struct{
   uint8_t tarefa, mutex;
 } xQueueItem_t;
 
-const uint8_t MAXT = 1; // 1 byte.
-const uint8_t MAXV = 17; // 1 byte.
+const uint8_t MAXT = 3; // 1 byte.
+const uint8_t MAXV = 3; // 1 byte.
 SemaphoreHandle_t xMutex[MAXV]; // 33 * MAXV  bytes quando inicializados, 2 na declaração.
 QueueHandle_t xQueue; // 33 bytes da queue criada quanda inicializada, 2 na declaração.
 
@@ -61,6 +61,7 @@ static void vPrintQueue(void* pvParameters){
       Serial.print(item.tarefa);
       Serial.print(" got mutex ");
       Serial.println(item.mutex);
+      Serial.println(freeHeap());
     }
   }
 }
@@ -72,16 +73,10 @@ void setup() {
   Serial.begin(9600);
   // wait for Leonardo
   while(!Serial) {}
-
-  Serial.println(freeHeap());
-  
-  for(i = 0; i < MAXV; i++){
-    xMutex[i] = xSemaphoreCreateMutex();
-    Serial.println(freeHeap());
-  }
   
   xQueue = xQueueCreate(1, sizeof(xQueueItem_t));
 
+  Serial.println(freeHeap());
   for(i = 0; i < MAXT; i++){
     xTaskCreate(  vGetSem, // Nome da tarefa (funcao que a chama);
                   "TarefaTeste",      // Nome dado a tarefa;
@@ -89,7 +84,6 @@ void setup() {
                   (void*)i,
                   tskIDLE_PRIORITY+2,                      // Prioridade;
                   NULL ); 
-    Serial.println(freeHeap());
   }
   
   xTaskCreate ( vPrintQueue,
@@ -98,6 +92,13 @@ void setup() {
                 NULL,
                 tskIDLE_PRIORITY+3,
                 NULL );
+
+  Serial.println(freeHeap());
+  for(i = 0; i < MAXV; i++){
+    xMutex[i] = xSemaphoreCreateMutex();
+    Serial.print(F("Memoria livre: "));
+    Serial.println(freeHeap());
+  }
 
 
   // start FreeRTOS

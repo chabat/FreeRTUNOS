@@ -142,8 +142,8 @@
     UBaseType_t uxRecursiveCallCount{ Mantém um contador do nível da recursão dos mutexes, e.g. quantas vezes aquele mutex foi pego na recursão
     quando a estrutura está sendo usada como mutex.
   }
-  (26B)List_t xTasksWaitingToSend lista de todas as tarefas que estão bloqueadas aguardando para escreverem nessa fila. (São guardadas em ordem de prioridade).
-  (26B)List_t xTasksWaitingToReceive lista de todas as tarefas que estão bloqueadas aguardando para lerem dessa fila. (Também em ordem de prioridade).
+  (9B)List_t xTasksWaitingToSend lista de todas as tarefas que estão bloqueadas aguardando para escreverem nessa fila. (São guardadas em ordem de prioridade).
+  (9B)List_t xTasksWaitingToReceive lista de todas as tarefas que estão bloqueadas aguardando para lerem dessa fila. (Também em ordem de prioridade).
   (1B)UBaseType_t uxMessagesWaiting Número de mensagens que estão na fila.
   (1B)UBaseType_t uxLength comprimento da fila. (É definido pelo numero de dados que ela guardará, não o número de bytes).
   (1B)UBaseType_t uxItemSize tamanho de cada item que essa fila irá manter.
@@ -158,7 +158,7 @@
     aqui pertence.
     }
   }
-}(63B)
+}(31B)
 
 (timers.c) Timer_t(xTIMER){
   (2B) const char *pcTimerName;
@@ -454,6 +454,7 @@ dando o valor de queueQUEUE_TYPE_BASE (que é de uso interno apenas, mas é defi
 
 (semphr.h) xSemaphoreTake(){
   Na verdade é uma definição pra xQueueGenericReceive que recebe um QueueHandle_t do semaforo, null, o tempo de bloqueio e pdFALSE;
+
 }
 
 (queue.c) xQueueGenericReceive(){
