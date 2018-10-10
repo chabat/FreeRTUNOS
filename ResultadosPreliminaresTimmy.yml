@@ -82,6 +82,12 @@ listSET_LIST_ITEM_VALUE():
 {
   Vai atribuir o que está em xItemValue de pxListItem o valor xValue.
 }
+
+xSemaphoreTake():
+{
+  - Na verdade é uma chamada de xQueueGerenicReceive, passando como parametros o handle do semaforo e o tempo maximo a esperar.
+}
+
 --
 
 #TIMERS
