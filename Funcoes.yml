@@ -1,9 +1,10 @@
 (queue.c) xQueueGenericReceive():
 {
   - Verifica se a fila existe;
+  - Entra em um for interminável. -> Então ele vai ficar tentando pra sempre. O que quebra os fors são os returns dentro da funçao.
   - Entra na região crítica;
   Se houver alguma mensagem na fila esperando ser lida:
-    - Inicie a leitura pelo pc.ReadFrom;
+    - Salve a posição inicial de onde começar a ler (pcReadFrom) em pcOriginalReadPosition.
     - Copie um item para o buffer através de prvCopyDataFromQueue.
         Se não estiver somente observando a fila:
           - Diminua a quantidade de mensagens esperando.
@@ -22,7 +23,7 @@
       - Saia de região crítica e retorne um erro dizendo que a queue está vazia.
     Caso contrário, mas é a primeira vez que está verificando:
       - Defina o xEntryTimeSet e defina o timeout;
-    - Saia da região crítica.
+  - Saia da região crítica.
   - Suspenda o escalonador e bloqueie a fila, para garantir a atomicidade.
   Se o timeout ainda não expirou:
     Se a fila não está vazia:
