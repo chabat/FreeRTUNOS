@@ -81,16 +81,6 @@
    }
 }
 
-(tasks.c) XtaskCreate{ Definida como XtaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate,
- os outros dois são o ponteiro para o  buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois ultimos parametros
- são passados como NULL)
-   configASSERT():{ O primeiro irá verificar se o ponteiro não é nulo. O segundo provavelmente é para verificar
-   se a prioridade da tarefa a ser criada é menor que a maior prioridade possível. É usado um bitwise and com a
-   constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
-   }
-   prvAllocateTCBAndStack() { }
-}
-
 (FreeRTOS.h) configASSERT{ Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
 a debugação, pois indica o arquivo e a linha do erro.
 }

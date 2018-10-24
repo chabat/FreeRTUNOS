@@ -1,0 +1,16 @@
+(tasks.c) XtaskCreate:
+(Definida como XtaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate, os outros dois são o ponteiro para o
+buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois ultimos parametros são passados como NULL)
+
+- Utiliza uma chamada de configASSERT() para verificar se o endereço da função da tarefa é válida.
+
+(CHECAR) - Utiliza uma chamada de configASSERT() para verificar se a prioridade da tarefa a ser criada é menor que a maior prioridade possível.
+É usado um bitwise AND com a constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
+
+-Aloca a memória necessária pelo TCB e pela pilha da nova tarefa com uma chamada à prvAllocateTCBAndStack(), checando se as alocações foram
+bem sucedidas. Passa como argumentos para a função a profundidade da pilha e o ponteiro para o buffer da pilha (tackType_t * const puxStackBuffer)
+que inicialmente é NULL.
+
+-Caso a proteção de memória estivesse ativada (portUSING_MPU_WRAPPERS == 1), aconteceriam checagens para ver se a função deve rodar em modo
+previlegiado e chacagens para ver se a função proveu a propria pilha ou se ela foi alocada dinamicamente. No ultimo caso, é necessario fazer
+a liberação de memoria caso a função for terminada.

@@ -8,6 +8,22 @@ Authors: Felipe Chabatura Neto
 */
 #include <Arduino_FreeRTOS.h>
 
+/** current begining of heap */
+extern char *__brkval;
+
+#if defined(CORE_TEENSY) || ARDUINO == 104
+extern char __bss_end;
+/** \return free heap size */
+size_t freeHeap() {
+  return (char*)RAMEND - (__brkval ? __brkval : &__bss_end)+ 1;
+}
+#else  // CORE_TEENSY
+/** \return free heap size */
+size_t freeHeap() {
+  return (char*)RAMEND - (__brkval ? __brkval : __malloc_heap_start) + 1;
+}
+#endif  // CORE_TEENSY
+
 /* Usado como contador para o loop, para criar um delay */ 
 //#define mainDELAY_LOOP_COUNT   ( 0xfffff )
 
@@ -15,13 +31,11 @@ Authors: Felipe Chabatura Neto
 
 void setup() {
   /* Define a taxa de bits por segundo para transmissão de dados */ 
-  //Serial.begin(9600);
-
   /* Cria a tarefa */
   //xTaskCreate( vTarefa, "Tarefa", 200, NULL, 1, NULL );
 
   /* Inicia o escalonador */
-  //vTaskStartScheduler();  
+  vTaskStartScheduler();  
     
   /* Se tudo deu certo, este trecho nunca será executado */
   for( ;; );
