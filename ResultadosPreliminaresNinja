@@ -144,3 +144,15 @@ Funcoes adicionais ao incluir "vTaskStartScheduler": 3
 prvIdleTask
 vListInitialise
 vTaskStartScheduler
+
+Relação de quantidades de tarefas com 100B de pilha cada e filas com 5 itens de 4bytes:
+Quantidade de Tarefas | Quantidade Máxima de Filas
+          1           |             22
+          2           |             19
+          3           |             16
+          4           |             14
+          5           |             11
+          6           |             8
+          7           |             5
+          8           |             3
+          9+          |             0  
