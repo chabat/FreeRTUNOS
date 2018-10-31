@@ -11,7 +11,7 @@
           Se estiver usando mutexes e a fila é um mutex:
             - Será incrementado a quantidade de vezes que aquele mutex foi pego através de pvTaskIncrementMutexHeldCount,
             além de ser atribuido a pxMutexHolder o tcb da tarefa que o pegou.
-          Se houver alguma mensagem esperando para colocar um dado nessa fila (pode ser um outro mutex?):
+          Se houver alguma mensagem esperando para escrever um dado nessa fila:
             - Coloque ele na lista de pronto e libere o uso do escalonador.
         Se tá só observando:
           - Resete o ponteiro de leitura.
@@ -35,7 +35,7 @@
     Caso contrário:
       - Tente de novo.
   Se o timeout expirou:
-    - Retorn erro que a fila está vazia.
+    - Retorna erro que a fila está vazia.
 }
 
 (tasks.c)	vTaskPriorityInherit():
@@ -58,13 +58,13 @@
 
 (tasks.c) pvTaskIncrementMutexHeldCount():
 {
-  - Basicamente verifica se o tcb atual não é nulo, pois pode ser a primeira vez que ele está sendo pego.
-  Se não for, então incrementará a quantidade de vezes que ele foi pego.
+  - Basicamente verifica se o tcb atual não é nulo, pois pode ser que a função foi chamada antes de alguma tarefa ser criada.
+  Se não for, então incrementará a quantidade de vezes que ele foi pego/talvez seja a quantidade de mutexes que o tcb pegou.
   - Retorna o tcb atual, isso faz com que o pxMutexHolder(pcTail) caso seja a primeira vez já tenha qual é o TCB
   que está segurando aquele mutex.
 }
 
-xSemaphoreCreateMutex():
+(semphr.c) xSemaphoreCreateMutex():
 {
   Na verdade é somente uma definição, a função real é xQueueCreateMutex(queueQUEUE_TYPE_MUTEX)
   - Cria uma nova fila e atribui a um ponteiro.
@@ -80,20 +80,36 @@ xSemaphoreCreateMutex():
   - Retorna o handle da queue.
 }
 
-xQueueGive():
+(queue.c) xQueueGive():
 {
-  - Se a quantidade de mensagens na fila forem menor que o tamanho dela, então é possível colocá-la lá.
-  - Se o tipo da fila é um mutex, então ele vai chamar a função xTaskPriorityDisinherit para o pxMutexHolder
-  e vai dar que o pxMutexHolder daquela fila é NULL.
-  - Aumenta a quantidade de mensagens esperando por algum dado para chegar na fila, então essa tarefa será desbloqueada.
-  - Se ao tentar remover da lista de eventos retornar pdFalse, então a tarefa tem maior prioridade, deste modo deve-se
-  liberar o uso do processador imediatamente.
+  - Entra na região crítica.
+  Se a quantidade de mensagens na fila forem menor que o tamanho dela, então é possível colocá-la lá:
+    - Se o tipo da fila é um mutex, então ele vai chamar a função xTaskPriorityDisinherit para o pxMutexHolder
+    e vai dar que o pxMutexHolder daquela fila é NULL.
+    - Aumenta a quantidade de mensagens esperando por algum dado para chegar na fila.
+    - Se houver uma tarefa esperando para ler da fila, então essa tarefa será desbloqueada.
+    - Se ao tentar remover da lista de eventos retornar pdTRUE, então a tarefa tem maior prioridade, deste modo deve-se
+    liberar o uso do processador imediatamente.
+    - Se por algum motivo os mutexes serem devolvidos em uma ordem diferente das que foram pegos, a tarefa vai ser liberada do escalonador
+    - Saia da região crítica
+    - Retorne pdPASS
   Se a fila estiver cheia:
     - Se não houver a possibilidade de esperar, então ela vai sair da região crítica e retornar errQUEUE_FULL;
     - Se houver, então será setado um timeout para a tarefa.
+  - Sai da região crítica.
+  - Suspende o escalonador.
+  - Bloqueia a fila.
+  Se o timeout ainda não estourou:
+    Se a fila está cheia:
+      - Coloca ela na lista de eventos xTasksWaitingToSend. <- Pq assim a tarefa bloqueia.
+      - Desbloqueia a fila e resuma o escalonador.
+    Se não:
+      - Desbloqueia a fila e resuma o escalonador.
+  Se estourou:
+    - Desbloqueia a fila, resuma o escalonador e retorne erro.
 }
 
-xTaskPriorityDisinherit():
+(tasks.c) xTaskPriorityDisinherit():
 {
   - Vai decrementar a quantidade de mutexes que o tcb atual segura.
   - Se a prioridade dele mudou, então ele vai devolver a prioridade daquele tcb para a sua prioridade original,
@@ -104,12 +120,24 @@ xTaskPriorityDisinherit():
   - Retorne pdTRUE.
 }
 
-listSET_LIST_ITEM_VALUE():
+(list.h) listSET_LIST_ITEM_VALUE():
 {
   Vai atribuir o que está em xItemValue de pxListItem o valor xValue.
 }
 
-xSemaphoreTake():
+(semphr.c) xSemaphoreTake():
 {
   - Na verdade é uma chamada de xQueueGerenicReceive, passando como parametros o handle do semaforo e o tempo maximo a esperar.
+}
+
+(tasks.c) xTaskCheckForTimeOut():
+{
+  Se existe suspensão de tarefa e ticks to wait for igual a portMAX_DELAY:
+    - retorne pdFALSE.
+  Se o contador de overflows é diferente e a quantidade de ticks é maior que a salva na variável:
+    - então o tempo já deu overflow e passou, portanto deve-se retornar pdTRUE.
+  Se o tempo ainda não estourou:
+    - Calcula o tempo restante e atualiza pxTimeOut.
+    - Retorne pdFALSE.
+  Retorne pdTRUE.
 }
