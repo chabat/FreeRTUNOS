@@ -8,55 +8,53 @@ Authors: Felipe Chabatura Neto
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
 
-#define STACK_DEPTH 300
+#define STACK_DEPTH 100
 #define LOOP_COUNT 10000
-#define MESSAGE_SIZE 1
-#define QUEUE_LENGTH 5
-#define TICKS_TO_WAIT 500
+#define MESSAGE_LENGTH 100
+#define QUEUE_LENGTH 1
 
 void vClient();
 void vServer();
 
 
-char message[MESSAGE_SIZE];
+char message[MESSAGE_LENGTH];
+QueueHandle_t fila1, fila2;
 
 void setup() {
-  QueueHandle_t fila;
-  for(int i = 0; i < MESSAGE_SIZE; i++) message[i] = 'A';
+  for(int i = 0; i < MESSAGE_LENGTH; i++) message[i] = 'A';
   
   Serial.begin(9600); /* Define a taxa de bits por segundo para transmissão de dados */
 
-  fila = xQueueCreate(QUEUE_LENGTH, MESSAGE_SIZE);
-  xTaskCreate(vClient, NULL, STACK_DEPTH, (void*) fila, 4, NULL);
-  xTaskCreate(vServer, NULL, STACK_DEPTH, (void*) fila, 4, NULL);  
+  fila1 = xQueueCreate(QUEUE_LENGTH, MESSAGE_LENGTH);
+  fila2 = xQueueCreate(QUEUE_LENGTH, MESSAGE_LENGTH);
+  xTaskCreate(vClient, NULL, STACK_DEPTH, NULL, 4, NULL);
+  xTaskCreate(vServer, NULL, STACK_DEPTH, NULL, 4, NULL);  
   vTaskStartScheduler(); /* Inicia o escalonador */  
 
   for( ;; ); /* Se tudo deu certo, este trecho nunca será executado */
 }
 
-void vClient(void* param){
-  volatile uint32_t count = LOOP_COUNT;
+void vClient(){
+  volatile uint32_t count;
   uint32_t t1, t2;
   float TM;
-  QueueHandle_t fila = param;  
 
-  Serial.println(message);
+  count = LOOP_COUNT;
   t1 = micros();
   do{
-    xQueueSend(fila, message, TICKS_TO_WAIT);
-    Serial.println("Enviei");
+    xQueueSend(fila1, message, portMAX_DELAY);
+    xQueueReceive(fila2, message, portMAX_DELAY);
   }while(count--);
   t2 = micros();
-  TM = (t2-t1)/count/2.;
+  TM = (t2-t1)/(double)LOOP_COUNT/2.;
   Serial.println(TM);
   vTaskDelete(NULL);
 }
 
-void vServer(void* param){
-  QueueHandle_t fila = param;  
+void vServer(){
   do{
-    //Le da fila
-    //Escreve na fila
+    xQueueReceive(fila1, message, portMAX_DELAY);
+    xQueueSend(fila2, message, portMAX_DELAY);
   }while(1);
 }
 

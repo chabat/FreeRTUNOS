@@ -176,4 +176,14 @@ configMAX_PRIORITIES | Onde Cria a Tarefa Auxiliar | Prioridade da Principal | P
          4           |           Fora              |            4            |           4            |      cima     | 34.66
          4           |           Fora              |            4            |           3            |   baixo/cima  | 16.91
          4           |           Fora              |            4            |           3            |      baixo    | 16.06  (Timers desativados)
-         4           |           Fora              |            4            |           3            |      baixo    | 16.06 
+         4           |           Fora              |            4            |           3            |      baixo    | 16.06
+
+
+Tempo para Troca de mensagens através de filas:
+Tamanho da mensagem   |    Tempo em Microsegundos
+          1           |             94.55
+          10          |             103.51
+          50          |             143.52
+          100         |             193.66
+          250         |             344.47
+          500         |             338.66
