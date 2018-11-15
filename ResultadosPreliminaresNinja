@@ -174,5 +174,6 @@ Tempo de Troca entre Tarefas (Tempo em microsegundos):
 configMAX_PRIORITIES | Onde Cria a Tarefa Auxiliar | Prioridade da Principal | Prioridade da Auxiliar | Divisão por 2 | Tempo
          5           |           Fora              |            5            |           4            |      cima     | 34.65
          4           |           Fora              |            4            |           4            |      cima     | 34.66
-         4           |           Fora              |            4            |           3            |      baixo    | 16.06
-         4           |           Fora              |            4            |           3            |   baixo/cima  | 16.06
+         4           |           Fora              |            4            |           3            |   baixo/cima  | 16.91
+         4           |           Fora              |            4            |           3            |      baixo    | 16.06  (Timers desativados)
+         4           |           Fora              |            4            |           3            |      baixo    | 16.06 
