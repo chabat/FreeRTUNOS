@@ -36,6 +36,18 @@ Quantidade de Tarefas | Tamanho Máximo da Pilha | Total de bytes ocupados pelas
          8            |            122          |              1304
          9            |            103          |              1296
 
+Refatoração dos testes de quantidade de tarefas (No meu computador por que deu diferente):
+Quantidade de Tarefas | Tamanho Máximo da Pilha | Total de bytes ocupados pelas tarefas (Pilhas + TCBS)
+         1            |           1297          |              1338
+         2            |            626          |              1334
+         3            |            402          |              1329
+         4            |            290          |              1324
+         5            |            223          |              1320
+         6            |            178          |              1314
+         7            |            146          |              1309
+         8            |            122          |              1304
+         9            |            104          |              1305
+
 Planilha: https://goo.gl/5pdYQw
 
 *Tirando o for para criar as tarefas e a variável inteira iId, consegue-se alocar alguns bytes a mais,
@@ -165,7 +177,7 @@ Quantidade de Tarefas | Quantidade Máxima de Filas
           4           |             14
           5           |             11
           6           |             8
-          7           |             5
+          7           |             5 /(6?)
           8           |             3
           9+          |             0
 

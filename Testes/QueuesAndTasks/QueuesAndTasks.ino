@@ -10,7 +10,7 @@ Authors: Felipe Chabatura Neto
 #include <queue.h>
 //#include <ArduinoTestSuite.h>
 #define mainDELAY_LOOP_COUNT 112345 /* Usado como contador para o loop, para criar um delay */
-#define mainTASK_QUANTITY 10 /*Quantidade de tarefas a serem criadas*/
+#define mainTASK_QUANTITY 9 /*Quantidade de tarefas a serem criadas*/
 #define mainQUEUE_QUANTITY 0 /*Quantidade de filas a serem criadas*/
 #define mainQUEUE_LENGTH 5  /*Capacidade da fila em número de itens*/
 #define mainITEM_SIZE 4 /*Cada item é um inteiro de 32bits*/
