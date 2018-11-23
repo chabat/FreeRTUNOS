@@ -1,3 +1,68 @@
+(Arduino_FreeRTOS.h) portYIELD_WITHIN_API:
+Macro que define portYIELD_WITHIN_API como portYIELD
+
+(heap_3.c) pvPortMalloc:
+-Suspende o escalonador através de uma chamada de vTaskSuspendAll
+-Aloca um bloco do tamanho em bytes passado via parâmetro através de uma chamada de malloc(), atribuindo à variável de retorno
+  o retorno da chamada, que é um ponteiro para o início do bloco.
+-Chama a macro de tracing traceMALLOC, passando como parametro o ponteiro para inicio do bloco e tamanho do bloco em bytes
+-Resume o escalonador através de uma chamda de xTaskResumeAll
+-Caso configUSE_MALLOC_FAILED_HOOK estiver definida e o retorno da chamada a função malloc() seja NULL, indicando que não houve espaço
+suficiente na heap para a alocação ser concluída com sucesso, é chamada a função vApplicationMallocFailedHook(). Essa função é um hook, ou
+chamada de callback que se definida e configurada, será chamada se o retorno de malloc() for NULL.
+
+(list.h) listLIST_IS_EMPTY():
+*Macro para checar se uma lista está vazia, apenas vê se o número de itens é 0.
+
+(list.h) listGET_OWNER_OF_HEAD_ENTRY():
+-> Recebe como parametro a lista da qual se deseja obter o dono.
+
+-> Macro que obtém o  do dono do primeiro elemento numa lista. Listas geralmente são ordenadas de maneira crescente
+em relação aos valores dos itens.
+
+-> Essa função retorna o membro pxOwner do primeiro item da lista. O parametro pxOwner de um item de lista é um
+ponteiro para o objeto que é dono daquele item da lista. No escalonador, normalmente é um bloco de contro de tarefa (TCB).
+O parametro pxOwner efetivamente cria uma ligação de ida e volta entre o item e seu dono.
+
+*(como faz isso usando end->next->owner?)
+
+(list.h) listTEST_LIST_ITEM_INTEGRITY():
+*Macro que checa a integridade do item de lista passado como parâmetro. Faz isso comparando um valor da estrutura do item a um valor predeterminado,
+pode conseguir detectar sobrescrita dos valores na memória.
+
+(list.c) uxListRemove:
+*Remove o item passado por parâmetro de sua respectiva lista (o item tem o ponteiro para sua lista).
+Retorna o número de elementos que permanecem na lista.
+
+-Obtém a lista a qual o item pertence do própio item
+-Arruma os encadameantos da lista (liga os elementos anterior e próximo do item)
+-mtCOVERAGE_TEST_DELAY (usado durante testes de cobertura de decisão)
+-Garante que o índice da lista (pxIndex) seja deixado apontando para um item válido->
+  --Caso o índice esteja apontando para o item removido, aponta para o anterior dele.
+  --Caso contrário, apenas mtCOVERAGE_TEST_MARKER
+-Seta o container do item (Lista ao qual pertence) como NULL
+-Decrementa o número de itens da listas
+-Retorna o número de itens restantes.
+
+(list.c) vListInsertEnd():
+*Insere um item no final da lista passada como parâmetro
+
+-Checa a integridade da lista e do item que está sendo inserido comparando valores de sua estrutura com uma constante, através de chamadas para
+listTEST_LIST_INTEGRITY() e listTEST_LIST_ITEM_INTEGRITY().
+-Atribui o próximo do elemento sendo inserido como o pxIndex da fila.
+-Atribui o anterior do elemento sendo inserido como o anterior do pxIndex da fila.
+-mtCOVERAGE_TEST_DELAY (usado durante testes de cobertura de decisão)
+-Atribui ao próximo do anterior do pxIndex e ao anterior do pxIndex o novo item
+-Salva no item em qual container (lista) ele se encontra
+-incrementa o número de elementos na fila
+
+(port.c) vPortYield:
+*Essa função é responsável pela troca "manual" de contexto.
+
+(portmacro.h) portYiELD:
+*Macro que define portYiELD() como vPortYield.
+
+
 (tasks.c) XtaskCreate:
 (Definida como XtaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate, os outros dois são o ponteiro para o
 buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois ultimos parametros são passados como NULL)
@@ -14,3 +79,62 @@ que inicialmente é NULL.
 -Caso a proteção de memória estivesse ativada (portUSING_MPU_WRAPPERS == 1), aconteceriam checagens para ver se a função deve rodar em modo
 previlegiado e chacagens para ver se a função proveu a propria pilha ou se ela foi alocada dinamicamente. No ultimo caso, é necessario fazer
 a liberação de memoria caso a função for terminada.
+
+(tasks.c) vTaskSuspendAll:
+-Incrementa um contador chamado ++uxSchedulerSuspended, o que indica que o escalonador foi suspenso. Isso não desabilita as interrupções,
+trocas de contexto não ocorrem enquanto o escalonador estiver suspenso. Ticks ficarão pendentes até uma chamada de xTaskResumeAll.
+Explicação da atomicidade -> http://goo.gl/wu4acr
+
+(tasks.c) xTaskResumeAll:
+-Garante através de uma chamada de configASSERT (passando como parâmetro uxSchedulerSuspended) que a chamada para xTaskResumeAll
+tenha uma chamada anterior de vTaskSuspendAll correspondente.
+
+    *É possível que enquanto o escalonador estava suspenso, uma tarefa tenha sido removida de uma lista de eventos por causa de um ISR (Interruption service routine).
+    Se for o caso, esta tarefa foi adicionada a xPendingReadyList. Assim que o escalonador é resumido, é seguro mover todas as tarefas dessa lista para suas listas
+    de "pronta" correspondentes.
+
+-Desabilita interrupções através de uma chamada de taskENTER_CRITICAL
+-Decrementa o valor de uxSchedulerSuspended, indicando que o escalonador foi resumido
+-Garante que o escalanonador não está mais suspenso e que existam tarefas, caso contrário, usa mtCOVERAGE_TEST_MARKER().
+
+-Enquanto houverem tarefas na lista de tarefas pendentes (xPendingReadyList) (Checa com listLIST_IS_EMPTY()) ->
+  --Pega o endereço do TCB da tarefa com listGET_OWNER_OF_HEAD_ENTRY()
+  --Remove o xEventListItem e o xGenericListItem do TCB de suas respectivas listas com uxListRemove()
+  --Adiciona a tarefa a lista de pronto com prvAddTaskToReadyList();
+  --Se a tarefa movida para pronto tem prioridade(pxTCB->uxPriority) maior que a tarefa atual(pxCurrentTCB->uxPriority), então uma troca de contexto deve
+  ser realizada (xYieldPending = pdTRUE)
+
+*Se algum tick ocorreu enquanto o escalonador estava suspenso, então eles devem ser processados agora. Isso garante que não ocorram erros com o contador
+de ticks, e que quaisquer tarefas atrasadas sejam resumidas no tempo correto.
+
+-Se há ticks pendentes, enquanto houverem ticks pendentes ->
+  --Chama a função xTaskIncrementTick() para incrementar o contador de ticks e ver se o novo valor vai causar o desbloqueio de alguma tarefa.
+  --Caso o retorno da chamda de xTaskIncrementTick() não for falso, será necessário uma troca de contexto, portanto xYieldPending = pdTRUE.
+  --Decrementa o número de ticks pendentes
+
+-Se há troca de contexto pendente ->
+  --Caso configUSE_PREEMPTION seja diferente de 0, seta o valor de xAlreadyYielded para pdTRUE, indicando que vai haver troca de contexto
+  --Caso a preempção esteja ativada, troca de contexto com uma chamada de taskYIELD_IF_USING_PREEMPTION
+
+-Habilita novamente as interrupções através de uma chamada de taskEXIT_CRITICAL()
+
+
+(tasks.c) taskYIELD_IF_USING_PREEMPTION:
+  -Caso configUSE_PREEMPTION seja 0, é definida como uma macro vazia.
+  -Caso contrário, é definida como portYIELD_WITHIN_API
+
+  *Isso é feito por que caso o escalonador cooperativo esteja sendo usado então uma troca de contexto não deve ser realizada
+  apenas por que uma tarefa de maior prioridade foi acordada.
+
+(tasks.c) prvAddTaskToReadyList():
+*Macro para adicionar a tarefa do TCB passado como parâmetro no fim da lista de pronto apropriada.
+
+-Macro de tracing traceMOVED_TASK_TO_READY_STATE
+-Verifica e possivelmente atualiza a prioridade da maior tarefa pronta com uma chamada para taskRECORD_READY_PRIORITY
+-Adiciona o TCB da tarefa a fila de tarefas prontas com uma chamada de vListInsertEnd()
+
+(tasks.c) taskRECORD_READY_PRIORITY():
+*Macro para atualizar a variável uxTopReadyPriority, que guarda a prioridade da tarefa pronta com maior prioridade.
+
+-Se a a prioridade da tarefa passada como parâmetro for maior que a guardada em uxTopReadyPriority, atualiza uxTopReadyPriority
+para a prioridade passada como parametro.
