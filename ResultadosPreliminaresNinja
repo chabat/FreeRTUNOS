@@ -1,7 +1,7 @@
 -----------------TAREFAS-----------------
 Tamanho do TCB de cada tarefa = 41 bytes
 Largura da pilha (Tamanho da palavra) = 1 byte
-Profundidade mínima da pilha = 100 bytes/palavras
+Profundidade mínima da pilha = 85 bytes/palavras
 Máximo de tarefas ao mesmo tempo com pilhas de profundidade mínima = 7
 
 1686 bytes for local variables (maximum 2048)
@@ -47,7 +47,7 @@ Quantidade de Tarefas | Tamanho Máximo da Pilha | Total de bytes ocupados pelas
          7            |            146          |              1309
          8            |            122          |              1304
          9            |            104          |              1305
-
+         10           |            89           |              1300   
 Planilha: https://goo.gl/5pdYQw
 
 *Tirando o for para criar as tarefas e a variável inteira iId, consegue-se alocar alguns bytes a mais,

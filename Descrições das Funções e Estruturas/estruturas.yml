@@ -1,3 +1,7 @@
+******************************************************************************************************************************************************
+***********************************************************SESSÂO DE TIPOS E ESTRUTURAS***************************************************************
+******************************************************************************************************************************************************
+
 TAMANHO DOS TIPOS E ESTRUTURAS::
 
 uint32_t: 4B (Unsigned long) (portmacro.h)
@@ -23,8 +27,8 @@ List_t: 9B (list.h)
 ** Pode ser uint16_t ou uint32_t dependendo da definição de configUSE_16_BIT_TICKS.
 
 
-
-DESCRIÇÃO DAS ESTRUTURAS: (#ND significa não definido na configuação padrão)
+DESCRIÇÃO DAS ESTRUTURAS: Os campos precedidos de "#" não estão definidos na
+configuração padrão.
 
 Sobre os valores de checagem de integridade das estruturas de lista:
 Caso configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES for declarado, variáveis serão
@@ -44,87 +48,156 @@ as tecnologias de compilação avançam ou caso seja utilizada "aggressive cross
 na FreeRTOSConfig.h -> #define configLIST_VOLATILE volatile
 
 ListItem_t: 10B (list.h)
-  #ND(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;)
+  #(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;)
   (2B) configLIST_VOLATILE TickType_t xItemValue;
   (2B) struct xLIST_ITEM* configLIST_VOLATILE pxNext;
   (2B) struct xLIST_ITEM* configLIST_VOLATILE pxPrevious;
   (2B) void *pvOwner;
   (2B) void *configLIST_VOLATILE pvContainer;
-  #ND(2B) listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue2);
+  #(2B) listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue2);
 
 MiniListItem_t: 6B (list.h)
-  #ND(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;);
+  #(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;);
   (2B) configLIST_VOLATILE TickType_t xItemValue;
   (2B) struct xLIST_ITEM* configLIST_VOLATILE pxNext;
   (2B) struct xLIST_ITEM* configLIST_VOLATILE pxPrevious;
 
 List_t: 9B (list.h)
-  #ND(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;);
+  #(2B) listFIRST_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue1;);
   (1B) configLIST_VOLATILE UBaseType_t uxNumberOfItems; #quantos itens tem na fila.
   (2B) ListItem_t * configLIST_VOLATILE pxIndex; #Usado para passar pela lista. Aponta para o ultimo item retornado pela chamada listGET_OWNER_OF_NEXT_ENTRY.
   (6B) MiniListItem_t xListEnd; #Item da lista que contém o maior valor possível significando que chegou no fim da lista.
-  #ND(2B) listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue2);
-
-Sobre portSTACK_GROWTH:
-É definido
+  #(2B) listSECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE (TickType_t xListIntegrityValue2);
 
 TCB_t(tskTCB): 41B (tasks.c)
-  (2B) volatile stackType_t pxTopOfStack; #Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
-  #ND(0) portUSING_MPU_WRAPPERS #Usado para a proteção da memória, porém no arduino não é utilizada. Se fosse definido as xMPU_SETTINGS deveriam ser definidas como parte da port layer, e teria uma flag que diria se a pilha foi alocada dinâmicamente ou estaticamente.
-  (10B) ListItem_t xGenericListItem; #É o que define o estado da tarefa. Se a lista que referencia esse item é a lista de pronto, então ele está pronto para ir para o escalonador.
-  (10B) ListItem_t xEventListItem; #Usado para refenciar uma tarefa de uma lista de eventos, isso quer dizer que, por exemplo, se uma tarefa está esperando um dado chegar em uma fila, então sua lista de eventos é referenciada da lista de filas esperando para receber.
+  (2B) volatile stackType_t *pxTopOfStack; #Ponteiro para a localização do ultimo item colocado na pilha da tarefa.
+
+  #portUSING_MPU_WRAPPERS[1]:
+      #(?) xMPU_SETTINGS xMPUSettings; #Caso a proteção de memória estivesse ativada, essa estrutura deveria ser definida como part da "port layer" (portmacro.h?)
+      #(1B) BaseType_t xUsingStaticallyAllocatedStack; #Flag que indicaria se a pilha foi alocada esaticamente ou dinamicamente.
+
+  (10B) ListItem_t xGenericListItem; #A lista referenciada por esse item de lista denota o estado da tarefa (Pronta, Bloqueada, Suspensa)
+  (10B) ListItem_t xEventListItem; #Usado para refenciar uma tarefa de uma lista de eventos.
   (1B) UBaseType_t uxPriority; #Prioridade da tarefa. 0 é a prioridade mais baixa.
   (2B) StackType_t *pxStack; #Aponta para o começo da pilha.
-  (8B) char pcTaskName[configMAX_TASK_NAME_LEN] #Nome descritivo da tarefa, tem no máximo tamanho 8(pode mudar conforme FreeRTOSConfig.h)
-  #-1 portSTACK_GROWTH { Já definido
-    (2B) StackType_t *pxEndOfStack { Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha.
-    }
-  }
-  #ND(0) portCRITICAL_NESTING_IN_TCB{ definição que pertimirá ou não o critical nesting.
-    (1B) UBaseType_t uxCriticalNesting { Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para
-    guardar esse valor.volatile
-    }
-  }
-  #0 configUSE_TRACE_FACILITY{ Grava a sequencia em que as tarefas recebem o tempo de processamento do microprocessador.
-    (1B) UBaseType_t uxTCBNumber { Contador de quantidade de vezes que TCBs foram criados. Serve para ajudar debuggers para saber quando uma tarefa foi
-    deletada e recriada.
-    }
-    (1B) UBaseType_t uxTaskNumber { Numero utilizado por códigos de rastro (trace) de terceiros.
-    }
-  }
-  #1 configUSE_MUTEXES{ Caso o uso de mutexes esteja ligado.
-    (1B) UBaseType_t uxBasePriority{ a ultima prioridade atribuida a tarefa. Usado pelo mecanismo de herança de prioridades.
-    }
-    (1B) UBaseType_t uxMutexesHeld{ Numero de mutexes que a tarefa está segurando (não temos certeza, entretanto).
-    }
-  }
-  #ND(0) configUSE_APPLICATION_TASK_TAG{ Habilita ou não o uso de valores de tag para uma tarefa. Tag é um valor que pode ser atribuido a cada
-  tarefa e pode ser usado pela aplicação para macros de tracing. O kernel não utiliza esse recurso. Esse valor pode ser qualquer coisa,
-  até uma função de callback.
-    (1B) TaskHookFunction_t { é uma variável que recebe um valor, passado por parametro como ponteiro para void, mas que é do tipo BaseType_t.
-    o parâmetro pode ser usado para passar qualquer valor para a função. } pxTaskTag{ valor dado a tag da tarefa.
-    }
-  }
-  #ND(0) configNUM_THREAD_LOCAL_STORAGE_POINTERS{ Usado para guardar um valor dentro do TCB. Esse valor é específico da thread em questão. Alternativa
-  para alguns casos de variáveis globais em ambientes multithreads.
-    (2B) void *pvThreadLocalStoragePointers[ configNUM_THREAD_LOCAL_STORAGE_POINTERS]{ array de ponteiros para void, usado para guardar valores.
-    possui uma função específica para definir e ler um valor no array de ponteiros (vTastkSetThreadLocalStoragePointer() e
-    pvTastkGetThreadLocalStoragePointer()).
-    }
-  }
-  #ND(0) configGENERATE_RUN_TIME_STATS{ usado para coletar informações acerca do uso do processamento que foi usado por cada tarefa (tempo absoluto e percentual).
-  A função vTaskGetRunTimeStats() é usada para mostrar essas informações em um formato tabular.
-    (4B) uint32_t ulRunTimeCounter{ Quantidade de tempo que a tarefa passou no estado running.
-    }
-  }
-  #ND(0) configUSE_NEWLIB_REENTRANT{ Habilita o uso de uma biblioteca popular para sistemas embarcados (NewLib). #ND.
-    (0B) struct _reent xNewlib_reent{ Aparentemente não está definido em lugar algum. Portanto o dono da aplicação deve definir essa estrutura.
-    }
-  }
-  #ND(1) configUSE_TASK_NOTIFICATIONS{ Definido caso a funcionalidade de notificações diretas das tarefas deseja ser usada. Cada tarefa consome 8 bytes adicionais
-  de RAM quando essa funcionalidade está incluida (Conferir se no arduino AVR é 8bytes mesmo).
-    (4B) volatile uint32_t ulNotifiedValue{ Variável que armazenará os valores das notificações.
-    }
-    (2B) volatile eNotifyValue eNotifyState{ Variável que guarda o estado da notificação.
-    }
-  }
+  (8B) char pcTaskName[configMAX_TASK_NAME_LEN]; #Nome descritivo da tarefa, para propósitos de debug. (configMAX_TASK_NAME_LEN é ajustável em FreeRTOSConfig.h e por padrão, é 8)
+
+  #portSTACK_GROWTH[2]->
+    #(2B) StackType_t *pxEndOfStack; #Se a pilha cresce para cima, é necessário um ponteiro para o fim da pilha. Não é o caso do Arduino Uno.
+
+  #portCRITICAL_NESTING_IN_TCB[3]:
+    #(1B) UBaseType_t uxCriticalNesting; #Se o quão "Nested" a região critica está for guardada no TCB, então é necessário ter uma variável para guardar esse valor.
+
+  #configUSE_TRACE_FACILITY[4]->
+    #(1B) UBaseType_t uxTCBNumber; #Armazena um valor que é incrementando a cada vez que um TCB é criado. Serve para ajudar debuggers a saber quando uma tarefa foi deletada e recriada.
+    #(1B) UBaseType_t uxTaskNumber; #Número utilizado por códigos de rastro (trace) de terceiros.
+
+  ConfigUSE_MUTEXES[5]->
+    (1B) UBaseType_t uxBasePriority; #A ultima prioridade atribuida a tarefa. Usado pelo mecanismo de herança de prioridades.
+    (1B) UBaseType_t uxMutexesHeld; #Provavelmente o numero de mutexes que a tarefa está segurando.
+
+  #configUSE_APPLICATION_TASK_TAG[6]->
+    #(1B) TaskHookFunction_t pxTaskTag; #Valor da tag passado a tarefa. Pode ser qualquer coisa. Utilizado para fins de debug.
+
+
+  #configNUM_THREAD_LOCAL_STORAGE_POINTERS[7]->
+    #(0B) void *pvThreadLocalStoragePointers[configNUM_THREAD_LOCAL_STORAGE_POINTERS]; Array de ponteiros void, utilizado para armazenar valores dentro de uma tarefa.
+
+  #configGENERATE_RUN_TIME_STATS[8]->
+    #(4B) uint32_t ulRunTimeCounter; Quantidade de tempo que a tarefa passou no estado running.
+
+  #configUSE_NEWLIB_REENTRANT[9]->
+    #(?)struct _reent xNewlib_reent; Estrutura da biblioteca NewLib, que será alocada caso ela estiver sendo utilizada.
+
+  configUSE_TASK_NOTIFICATIONS[10]->
+    (4B) volatile uint32_t ulNotifiedValue #Valor de noticação da tarefa, um inteiro de 32 bits.
+    (2B) volatile eNotifyValue eNotifyState #Guarda o estado de noticação da tarefa, pode ser um dos valores descritos no enumerador eNotifyValue.
+
+(tasks.c) eNotifyValue:
+É um enumerador, que define os valores que podem ser passados para o
+campo eNotifyState de cada tarefa, sendo eles ->
+  -eNotWaitingNotification
+  -eWaitingNotification
+  -eNotified
+
+Queue_t (xQUEUE): 31B (queue.c)
+  *Caso seja mutex, haverá uma constante que chama queueQUEUE_IS_MUTEX, que nada mais é que se for um mutex, a cabeça da fila é usada como NULL, dizendo que é mutex.
+
+  (2B) int8_t *pcHead; #Aponta para o começo da area de armazenamento da Queue. Se for mutex, será usado como uxQueueType.
+
+  (2B) int8_t *pcTail; #Aponta para o byte no fim da área de armazenamento da Queue. É alocado um byte a mais que o necessário para armazenar os itens da fila, ele é usado como marcador. Se for um mutex, será chamado de pxMutexHolder.
+
+  (2B) int8_t *pcWriteTo; #Aponta para o próximo espaço vazio da área de armazenamento.
+
+  (2B) union u-> #Como os seguintes itens nunca coexistem, usa-se um union para economizar RAM.
+    (2B) int8_t *pcReadFrom; #Aponta para o ultimo lugar em que um item enfileirado foi lido quando a estrutura é usada como uma fila.
+    (1B) UBaseType_t uxRecursiveCallCount; #Mantém um contador do nível da recursão dos mutexes, e.g. quantas vezes aquele mutex foi recursivamente pego quando a estrutura está sendo usada como mutex.
+
+  (9B) List_t xTasksWaitingToSend; #Lista de todas as tarefas que estão bloqueadas aguardando para escrever nessa fila. (São guardadas em ordem de prioridade).
+  (9B) List_t xTasksWaitingToReceive; #Lista de todas as tarefas que estão bloqueadas aguardando para ler dessa fila. (Também em ordem de prioridade).
+
+  (1B) UBaseType_t uxMessagesWaiting; #Número de mensagens que estão na fila atualmente.
+  (1B) UBaseType_t uxLength; #Comprimento da fila. (É definido pelo numero de dados que ela guardará, não o número de bytes).
+  (1B) UBaseType_t uxItemSize; #Tamanho de cada item que essa fila irá manter.
+  (1B) UBaseType_t xRxLock; #Guarda o número de dados recebidos da fila (removidos da fila) enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+  (1B) UBaseType_t xTxLock; #Guarda o número de dados transmitidos à fila (adicionados a fila) enquanto ela estava bloqueada. Se estiver desbloqueada ela receberá queueUNLOCKED (-1).
+
+  #configUSE_TRACE_FACILITY[4]->
+    #(1B) UBaseType_t uxQueueNumber; #Variável para funções de tracing (número da fila?)
+    #(1B) UBaseType_t ucQueueType; #Variável para funcções de tracing (tipo da fila?)
+
+  #configUSE_QUEUE_SETS[11]->
+    #(2B) QueueDefinition *pxQueueSetContainer; #Ponteiro para o "queue set" ao qual a fila pertence.
+
+[1] Sobre portUSING_MPU_WRAPPERS:
+É uma constante definida em mpu_wrappers.h, referente ao uso de recursos de proteção de memória. A cosntante é definida de
+acordo com a arquitetura do microcontrolador. No caso do Arduino Uno, ela é definida como 0, indicando a ausencia de tais
+recursos.
+
+[2] Sobre portSTACK_GROWTH:
+É uma constante definida em portmacro.h, que indica se a pilha cresce dos endereços mais altos de memória
+para os mais baixos, ou ao contrário. No caso do port para Arduino Uno, a constante é definida como -1,
+indicando que a pilha cresce dos endereços mais altos para os mais baixos.
+
+[3] Sobre portCRITICAL_NESTING_IN_TCB:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não a existência (dentro do TCB) de um contador de
+profundidade de aninhamento de regiões críticas para a tarefa sendo executada. Serve para ports que não mantém seu
+própio contador na "port layer", não é o caso do Arduino Uno, portanto a constante é definida como 0.
+
+[4] Sobre configUSE_TRACE_FACILITY:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não as funcionalidades de tracing, para propósitos
+de debuggers e códigos de terceiros.
+
+[5] Sobre configUSE_MUTEXES:
+É uma constante definida em FreeRTOSConfig.h, que habilita ou não as funcionalidades de mutexes. Por padrão a constante
+é definida como 1, habilitando as funcionalidades de mutexes.
+
+[6] Sobre configUSE_APPLICATION_TASK_TAG:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não o uso de valores de tag para uma tarefa.
+Tag é um valor que pode ser atribuido a cada tarefa e pode ser usado pela aplicação para macros de tracing.
+Esse valor pode ser qualquer coisa, até uma função de callback. O kernel não utiliza esse recurso.
+
+[7] Sobre configNUM_THREAD_LOCAL_STORAGE_POINTERS:
+É uma constante definida em Arduino_FreeRTOS.h, que indica o tamanho do array de ponteiros de armazenamento
+local de cada thread. O mecanismo de ponteiros de armazenamento local para threads é um recurso que permite
+que as threads possuam um espaço para guardar valores que são específicos da tarefa a qual o TCB pertence.
+Esse recurso é usado como alternativa à variáveis globais em cenários multithread. No port para Arduino Uno,
+o valor da constante é setado para 0, desabilitando essa funcionalidade.
+
+[8] Sobre configGENERATE_RUN_TIME_STATS:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não a coleta de informações sobre a quantidade
+de tempo de processamento usado por cada tarefa. No caso do Arduino Uno, essa funcionalidade está desabilitada
+por padrão.
+
+[9] Sobre configUSE_NEWLIB_REENTRANT:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não o uso da biblioteca newlib, popular em sistemas
+embarcados e que provê uma série de funcionalidades de diversos tipos. No caso do port para Arduino Uno,
+essa funcionalidade está desabilitada por padrão. Além disso, a biblioteca não é usada pelos mantenedores do FreeRTOS.
+
+[10] Sobre configUSE_TASK_NOTIFICATIONS:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não o recurso de notificações de tarefas. Por padrão,
+esta funcionalidade está ativada no port para Arduino Uno do FreeRTOS.
+
+[11] Sobre configUSE_QUEUE_SETS:
+É uma constante definida em Arduino_FreeRTOS.h, que habilita ou não o recurso de "queue sets". No port para Arduino
+Uno, esse recurso vem desabilitado por padrão.

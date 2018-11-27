@@ -1,5 +1,13 @@
+******************************************************************************************************************************************************
+***********************************************************SESSÂO DE FUNÇÕES**************************************************************************
+******************************************************************************************************************************************************
+
 (Arduino_FreeRTOS.h) portYIELD_WITHIN_API:
 Macro que define portYIELD_WITHIN_API como portYIELD
+
+(Arduino_FreeRTOS.h) configASSERT:
+*Usada para evitar que o programa execute após essa chamada caso o valor do parâmetro seja igual a 0. Isso facilita
+a depuração, pois indica o arquivo e a linha do erro.
 
 (heap_3.c) pvPortMalloc:
 -Suspende o escalonador através de uma chamada de vTaskSuspendAll
@@ -44,6 +52,11 @@ Retorna o número de elementos que permanecem na lista.
 -Decrementa o número de itens da listas
 -Retorna o número de itens restantes.
 
+(list.c) vListInitialise:
+*Recebe como parâmetro uma estrutura do tipo List_t e vai ajustar os ponteiros, tendo um ponteiro que marca o fim da fila (e.g. aponta para o fim dela),
+irá colocar um valor muito grande no fim, para que permaneça no final, assim o fim da fila sempre ficara lá. além de colocar o proximo e anterior itens da fila apontando
+para o fim (provavelmente para dizer que a lista não contém nenhum membro).
+
 (list.c) vListInsertEnd():
 *Insere um item no final da lista passada como parâmetro
 
@@ -62,9 +75,36 @@ listTEST_LIST_INTEGRITY() e listTEST_LIST_ITEM_INTEGRITY().
 (portmacro.h) portYiELD:
 *Macro que define portYiELD() como vPortYield.
 
+(queue.c) xQueueCreate()(xQueueGenericCreate):
+*Na verdade é usada assim (como xQueueCreate) para que só precise receber o valor do tamanho da queue e seu comprimento,
+mas na verdade ela chama a xQueueGenericCreate, dando o valor de queueQUEUE_TYPE_BASE (apenas utilizado para tracing, mas é definido como 0).
 
-(tasks.c) XtaskCreate:
-(Definida como XtaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate, os outros dois são o ponteiro para o
+-Remove warnings do compilador caso configUSE_TRACE_FACILITY não esteja ativada, explicitando a variável ucQueueType.
+
+-Verifica se o comprimento da fila é maior que 0 com uma chamada de configASSERT, para evitar erros.
+
+-Se o tamanho de cada item for 0, então não vai haver uma área de armazenamento de queue (possivelmente o único interesse é acessar os metadados da fila). Define o tamanho da fila em bytes para 0.
+
+-Caso contrário, o tamanho da fila em bytes será o comprimento da fila vezes o tamanho de cada item mais 1. Esse byte adicional serve para fazer wrap checking mais rápido (?).
+
+-Aloca o espaço para a estrutura da fila mais o tamanho da área de armazenamento em bytes.
+
+-Caso a alocação tenha sido bem sucedida->
+  --Se o tamanho do item for 0, ele vai fazer com que o ponteiro pcHead aponte para a própria estrutura da queue, por que é um endereço garantidamente dentro da memória mapeada. O valor não pode ser NULL
+  pois isso é usado para indicar que a fila é um mutex.
+
+  --Caso contrário, fará com que pcHead aponte para o início da área de armazenamento, pulando os dados estruturais da fila.
+
+  -Atualiza os dados estruturais da fila uxQueueLenght e uxItemSize;
+  -Chama a função xQueueGenericReset para resetar o estado da fila.
+  -Caso o tracing estiver ativado, atribui ao tipo da queue o valor de ucQueueType (nesse caso é um unsigned char).
+  -Se estiver usando conjunto de queues, então atribui ao ponteiro de container dessa queue o valor NULL, isso quer dizer que ela não pertence a nenhum conjunto de filas.
+  -Chama a macro de tracing traceQUEUE_CREATE.
+  -Atribui o endereço (handle) da nova queue à variável de retorna e a retorna para quem chamou a função.
+
+
+(tasks.c) XtaskCreate(xTaskGenericCreate):
+(Definida como XTaskGenericCreate em tasks.h (Os 6 primeiros argumentos são os mesmos da xTaskCreate, os outros dois são o ponteiro para o
 buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois ultimos parametros são passados como NULL)
 
 - Utiliza uma chamada de configASSERT() para verificar se o endereço da função da tarefa é válida.
@@ -73,12 +113,113 @@ buffer da pilha e o ponteiro para região de memória (mais de uma?), esses dois
 É usado um bitwise AND com a constante do bit de privilégio negada para remover o bit de privilégio durante a comparação.
 
 -Aloca a memória necessária pelo TCB e pela pilha da nova tarefa com uma chamada à prvAllocateTCBAndStack(), checando se as alocações foram
-bem sucedidas. Passa como argumentos para a função a profundidade da pilha e o ponteiro para o buffer da pilha (tackType_t * const puxStackBuffer)
-que inicialmente é NULL.
+bem sucedidas. Passa como argumentos para a função a profundidade da pilha e o ponteiro para o buffer da pilha (StackType_t * const puxStackBuffer)
+que inicialmente é NULL, no caso de uma chamada a xTaskCreate.
 
 -Caso a proteção de memória estivesse ativada (portUSING_MPU_WRAPPERS == 1), aconteceriam checagens para ver se a função deve rodar em modo
 previlegiado e chacagens para ver se a função proveu a propria pilha ou se ela foi alocada dinamicamente. No ultimo caso, é necessario fazer
 a liberação de memoria caso a função for terminada.
+
+-Calcula o topo do endereço da pilha. Isso depende se a pilha cresce dos endereços altos ou baixos da memória.
+
+-Configura o TCB recém alocado com o estado inicial da tarefa com uma chamada à função
+prvInitialiseTCBVariables.
+
+-Inicializa a pilha do TCB para parecer com que a tarefa já estivesse rodando, mas tivesse sido interrompida
+pelo escalonador (com uma chamada de pxPortInitialiseStack). O endereço de retorno é setado para o início da função da tarefa. Uma vez que a pilha tenha
+sido inicializada a variável de topo da pilha é atualizada.
+
+-Caso tenha sido passado um endereço de variável para armazenar o handle, ele é atribuído a essa variável.
+
+-Entra numa região crítica para garantir que interrupções não acessem as listas de tarefa enquanto elas estão
+sendo atualizadas. Isso é feito com uma chamada de taskENTER_CRITICAL().
+
+-Aumenta o contador de tarefas (uxCurrentNumberOfTasks).
+
+-Se o TCB atual (pxCurrentTCB) for igual a NULL ->
+  -- Como não há outra tarefa ou estão todas suspensas, essa se torna a atual (pxCurrentTCB =  pxNewTCB)
+  -- Caso essa tenha sido a primeira tarefa a ser criada, é necessário inicializar as listas de tarefa, chama a função prvInitialiseTaskLists().
+-Caso hajam outras tarefas rodando no momento que esta foi criada ->
+  --Caso o escalonador ainda não esteja executando e essa tarefa tenha maior prioridade que as outras, faça dessa tarefa a tarefa atual.
+
+-Incrementa um contador de tarefas criadas (uxTaskNumber++)
+
+-Caso a funcionalidade de tracing (configUSE_TRACE_FACILITY) esteja ativada, atribui o número do contador previamente incrementado ao campo uxTCBNumber da tarefa. Somente para propósitos de tracing.
+
+-Aqui uma macro de tracing pode ser executada se previamente definida (traceTASK_CREATE( pxNewTCB ))
+
+-Adiciona a tarefa à lista de pronto com uma chamada à prvAddTaskToReadyList().
+
+-Atribui pdPASS à variável de retorno, indicando que a tarefa foi criada com sucesso.
+
+-A macro portSETUP_TCB(pxNewTCB) é chamada, ela é definida em Arduino_FreeRTOS.h como ( void )pxTCB.
+
+-Sai da Região Crítica com uma chamada de taskEXIT_CRITICAL()
+
+-Caso o TCB não possa ter sido alocado, atribui um erro indicando isso à variável de retorno e chama
+uma macro de tracing (traceTASK_CREATE_FAILED())
+
+-Caso o retorno da tarefa esteja marcado como pdPASS, o escalonador esteja rodando e atarefa criada tenha
+maior prioridade que a sendo executada atualmente, troca de contexto com uma chamada de taskYIELD_IF_USING_PREEMPTION()
+
+-Retorna o resultado de todo o processo a quem chamou a função
+
+(tasks.c) prvAllocateTCBAndStack:
+*Se a pilha cresce para baixo (portSTACK_GROWTH < 0), então aloca a pilha depois o TCB. Caso contrário (portSTACK_GROWTH > 0) aloca o tcb, depois a pilha.
+No caso do port para Arduino Uno, a pilha cresce pra baixo. Nesse caso não faz muita diferença, uma vez que tudo é controlado pelo próprio malloc.
+Porém em outras arquiteturas, isso deve ser considerado.
+
+*De onde vem a memória depende da implementação de pvPortMalloc
+
+-Caso a pilha cresça para cima->
+  --Aloca espaço para o TCB utilizando pvPortMalloc()
+  --Se alocado o TCB com sucesso, aloca o espaço para a pilha da tarefa utilizando pvPortMallocAligned(), armazenando no TCB o endereço para a base da pilha.
+    ---Caso não seja possível alocar a pilha, libera o espaço anteriormente alocado para o TCB e o seta como NULL
+
+-Caso a pilha cresça para baixo->
+  -Aloca o espaço para a pilha da tarefa utilizando pvPortMallocAligned()
+  -Se alocada a pilha com sucesso, aloca espaço para o TCB utilizando pvPortMalloc()
+  -Caso o TCB tenha sido alocado com sucesso, armazena o ponteiro para o inicio da pilha no TCB, do contrário, libera o espaço alocado para a pilha.
+
+-Caso algumas destas constantes esteja habilitada -> configCHECK_FOR_STACK_OVERFLOW, configUSE_TRACE_FACILITY, INCLUDE_uxTaskGetStackHighWaterMark
+  --Usa uma chamada de memset para setar a pilha da tarefa com um valor definido por tskSTACK_FILL_BYTE. É usado para checar a "marca d'água" da tarefa, para fins de tracing/debugging.
+
+-Caso alguma alocação falhe, o retorno da tarefa será NULL, e os espaços que foram alocados anterioremente serão liberados.
+
+(tasks.c) prvInitialiseTCBVariables:
+-Copia o nome da tarefa passado como parâmetro no campo pcTaskName do TCB, tomando cuidado para não copiar todos os configMAX_TASK_NAME_LEN caracteres, no caso do nome ser menor que o valor da constante.
+  Isso é feito para caso a memória depois da string não seja acessível, o que é extremamente improvável.
+
+-Garante que o nome foi terminado com \0, no caso dele ser maior ou igual a configMAX_TASK_NAME_LEN.
+
+-Remove o bit de previlegio do valor da prioridade da tarefa, caso presente, pois o valor é usado como indice de um array.
+
+-Atribui a prioridade à variável uxPriority do TCB.
+
+-Caso o uso de mutexes esteja habilitado, inicia as variáveis do TCB uxBasePriority como uxPriority e uxMutexesHeld como 0.
+
+-Inicializa os itens de lista xGenericListItem e xEventListItem com chamadas à função vListInitialiseItem. Ambos são marcados como não fazendo parte de uma lista.
+
+-Seta o próprio TCB como dono dos itens xGenericListItem e xEventListItem através da macro listSET_LIST_ITEM_OWNER(). Isso acontece para que possamos voltar ao TCB de um item generico numa lista.
+
+-Seta o valor do item de lista xEventListItem para o máximo de prioridades menos a prioridade dele através da macro listSET_LIST_ITEM_VALUE. As listas de eventos sempre são ordenadas por prioridade (Aparentemente em ordem crescente).
+
+-Caso portCRITICAL_NESTING_IN_TCB esteja ativada, inicializa o valor de uxCriticalNesting como 0.
+
+-Caso configUSE_APPLICATION_TASK_TAG esteja ativada, inicializa o valor de pxTaskTag como NULL.
+
+-Caso configGENERATE_RUN_TIME_STATS esteja ativada, inicializa o valor de ulRunTimeCounter como 0.
+
+-Caso portUSING_MPU_WRAPPERS, chama vPortStoreTaskMPUSettings provavelmente para armazenar as configurações de MPU. Essa função não está definida no port para Arduino Uno.
+  --Caso contrário, faz um casting pra void de xRegions e usStackDepth (Para evitar warnings?).
+
+-Caso configNUM_THREAD_LOCAL_STORAGE_POINTERS esteja habilitada, inicializa todos os ponteiros de pvThreadLocalStoragePointers como NULL.
+
+-Caso configUSE_TASK_NOTIFICATIONS esteja habilitada, inicializa o valor de ulNotifiedValue como 0 e eNotifyState como eNotWaitingNotification.
+
+-Caso configUSE_NEWLIB_REENTRANT esteja habilitada, chama _REENT_INIT_PTR(&(pxTCB->xNewLib_reent)) para inicializar a estrutura NewLib reent dessa tarefa.
+
+
 
 (tasks.c) vTaskSuspendAll:
 -Incrementa um contador chamado ++uxSchedulerSuspended, o que indica que o escalonador foi suspenso. Isso não desabilita as interrupções,

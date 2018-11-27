@@ -7,8 +7,8 @@ Authors: Felipe Chabatura Neto
 
 #include <Arduino_FreeRTOS.h>
 #define mainDELAY_LOOP_COUNT 112345 /* Usado como contador para o loop, para criar um delay */
-#define mainTASK_QUANTITY 1 /*Quantidade de tarefas a serem criadas*/
-#define mainSTACK_DEPTH 1295 /*Tamanho da pilha de cada tarefa em bytes*/
+#define mainTASK_QUANTITY 10 /*Quantidade de tarefas a serem criadas*/
+#define mainSTACK_DEPTH 89 /*Tamanho da pilha de cada tarefa em bytes*/
 
 void vTarefa(void);
 
