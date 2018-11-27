@@ -1,15 +1,6 @@
 #### ESTRUTURAS:
 
-(timers.c) Timer_t(xTIMER){
-  (2B) const char *pcTimerName;
-  (10B) ListItem_t xTimerListitem;
-  (2B) TickType_t xTimerPeriodInTicks;
-  (1B) UBaseType_t uxAutoReload;
-  (2B) void *pvTimerID;
-  (2B) TimerCallbackFunction_t pxCallbackFunction;
-  #(0) configUSE_TRACE_FACILITY
-    (2B)  UBaseType_t uxTimerNumber;
-} (19B)
+
 
 
 
@@ -27,67 +18,12 @@
 
 --:)
 
-(timers.c) xTimerCreateTimerTask{
-    - prvCheckForValidListAndQueue(){ Entra na região crítica e verifica se a queue já foi inicializada, em caso negativo, inicializa as listas de timer e cria
-    a fila do timer.
-    }
-    - Se a fila foi inicializada e INCLUDE_xTimerGetTimerDaemonTaskHandle é definido como 1, então a função de criar a tarefa daemon dos timers salvará o handle dela. Caso
-      contrário, criará a fila sem salvá-lo.
-    - Retorna pdPASS se conseguiu criar a tarefa e pdFAIL caso contrário.
-}
-
-(timers.c) prvCheckForValidListAndQueue{ Verifica se a lista dos timers ativos que são referenciados, junto da fila usada para se comunicar com os timers de
-software foram inicializados. Se não estiverem, cria e inicializa tudo.
-  - (task.h) taskENTER_CRITICAL(){ Entra na região crítica. Definida como (portmacro.h) portENTER_CRITICAL(), que nada mais é que um código em assembly para evitar interrupções (sejam elas globais ou interrupções
-    abaixo de uma certa prioridade), se a funcionalidade configMAX_SYSCALL_INTERRUPT_PRIORITY não estiver sendo usada, então serão desabilitadas as interrupções globalmente.
-  }
-  - Se a fila do timer ainda não foi inicializada/criada, crie duas listas de timer e diga que essas listas são as listas atuais, depois crie a fila do timer.
-  - chama vListInitialise(); para fazer os apontamentos e todo o resto necessário para iniciar as listas do timer.
-  - chama xQueueCreate(); para criar a fila do timer, com suas estruturas.
-  - Se o tamanho do registro das filas (configQUEUE_REGISTRY_SIZE) for maior que 0, então a fila atual será adicionada as filas já existentes.
-  - configQUEUE_REGISTRY_SIZE{ Usado para melhor visualização na hora de debugar. Permite que a fila tenha um nome e contém a informação necessária para o debugger encontrar cada fila e semáforo registrado.
-    }
 
 }
 
-(tasks.c) xTaskRemoveFromEventList(){ retire a tarefa de maior prioridade da lista de eventos esperando para escrever na fila e como ele pode escrever agora nessa fila, então
-o seu identificador de tcb será movido da lista de bloqueados para a lista de pronto. Assim como a lista de bloqueados, a lista de eventos também le ordenada por ordem de prioridades.
-  - Tenta atribuir listGET_OWNER_OF_HEAD_ENTRY() para pegar o primeiro membro da lista de eventos na qual está o TCB.
-  - Verifica se ele conseguiu atribuir.
-  - Chama uxListRemove() para a lista a qual o tcb atribuido pertence, para tirar o tcb dessa lista, caso o escalonador não esteja suspenso.
-  - Se ele estiver suspenso, então chama uma funcão que coloca o TCB na lista de prontos. Caso contrário, o coloca em uma lista de tarefas que estão prontas para irem para o estado de pronto.
-  - Se o TCB atual, removido da lista em que estava para a lista de pronto tem maior prioridade que o tcb correspondendo a tarefa, então uma troca de contexto deve ocorrer. Assim
-    retorna xReturn como true (que significa que a tarefa tem maior prioridade) e xYieldPending como true (significando que deve ocorrer uma troca de contexto).
-  - Tem algo sobre usar tickless idle, entretanto não entendi direito. (???)
-  }
 
-(queue.c) xQueueGenericReset{ Recebe como parâmetro um handle de queue e um basetype_t
-  - Vai fazer um ponteiro de queue_t apontar para o ponteiro de xQueue.
-  - Verifica se o ponteiro não é nulo.
-  - Entra na região crítica
-  - Altera o rabo da fila para a primeira posição não utilizada da fila.
-  - Atribui 0 para as mensagens esperando.
-  - Diz que é pra começar a ler da cauda e escrever pela cabeça
-  - Define que a quantidade de itens que foram lidos/removidos são -1, significando que a queue não está bloqueada.
-  - Se xNewQueue estiver pdFalse, quer dizer que ele não está reiniciando a fila pela primeira vez, então podem existir tarefas bloqueadas esperando para ler/escrever da fila.
-    Elas se manterão bloqueadas, mas se possuem tarefas bloqueadas esperando para escrever na fila, então uma deve ser escolhida para sair do estado de bloqueado, uma vez que será
-    possível escrever nela.(portmacro.h)
-  - ele chama listLIST_IS_EMPTY() para ver se a lista de mensagens esperando para escrever está vazia, se não está vazia ela tenta remover essa tarefa da lista (para a lista de pronto) que pertence através de xTaskRemoveFromEventList();
-  - Se a tarefa removida da lista tem maior prioridade, então é necessário que a tarefa que está agora ceda o processador para a nova tarefa. Ela faz isso liberando o processador, onde o escalonador escalonará a nova tarefa.
-  - Se xNewQueue estiver pdTrue, então é necessário criar as listas de tarefas que estão esperando para escrever e ler dessa fila.
-  - Saia da região crítica.
-  - Retorna pdPASS avisando que foi possível realizar tudo o que tinha para fazer.
-}
 
-(semphr.h) xSemaphoreTake(){
-  Na verdade é uma definição pra xQueueGenericReceive que recebe um QueueHandle_t do semaforo, null, o tempo de bloqueio e pdFALSE;
-}
 
-(queue.c) xQueueGenericReceive(){
-  - Verifica se a fila existe;
-  - Entra na região crítica.
-  -
-}
 
 **Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
 que podem ser redefinidas para prover funcionalidades de tracing. As macros vazias não afetam o funcionamento da aplicação.

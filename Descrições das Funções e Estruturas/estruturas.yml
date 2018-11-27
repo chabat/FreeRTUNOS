@@ -149,6 +149,16 @@ Queue_t (xQUEUE): 31B (queue.c)
   #configUSE_QUEUE_SETS[11]->
     #(2B) QueueDefinition *pxQueueSetContainer; #Ponteiro para o "queue set" ao qual a fila pertence.
 
+Timer_t(xTIMER): 19B (timers.c)
+  (2B) const char *pcTimerName;
+  (10B) ListItem_t xTimerListitem;
+  (2B) TickType_t xTimerPeriodInTicks;
+  (1B) UBaseType_t uxAutoReload;
+  (2B) void *pvTimerID;
+  (2B) TimerCallbackFunction_t pxCallbackFunction;
+  #configUSE_TRACE_FACILITY[4]->
+    #(2B)  UBaseType_t uxTimerNumber;
+
 [1] Sobre portUSING_MPU_WRAPPERS:
 É uma constante definida em mpu_wrappers.h, referente ao uso de recursos de proteção de memória. A cosntante é definida de
 acordo com a arquitetura do microcontrolador. No caso do Arduino Uno, ela é definida como 0, indicando a ausencia de tais
