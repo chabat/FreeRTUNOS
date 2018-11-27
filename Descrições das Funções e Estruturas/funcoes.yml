@@ -2,6 +2,9 @@
 ***********************************************************SESSÂO DE FUNÇÕES**************************************************************************
 ******************************************************************************************************************************************************
 
+*Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
+que podem ser redefinidas para prover funcionalidades de tracing. As macros vazias não afetam o funcionamento da aplicação.
+
 (Arduino_FreeRTOS.h) portYIELD_WITHIN_API:
 Macro que define portYIELD_WITHIN_API como portYIELD
 
@@ -212,6 +215,30 @@ e uxItemSize recebem o valor 0 e uxLength recebe valor 1.
 
 (semphr.c) xSemaphoreTake():
 -Na verdade é uma chamada de xQueueGerenicReceive, passando como parametros o handle do semaforo e o tempo maximo a esperar.
+
+(Tasks.c) VtaskStartScheduler():
+-Cria a tarefa idle guardando ou não o valor dela, de acordo com a constante INCLUDE_xTaskGetIdleHandle.
+-Caso o recurso de timers esteja ativado (configUSE_TIMERS) e a tarefa idle tenha sido criada com sucesso, cria a tarefa de timers.
+
+-Desabilita as interrupções com uma chamada de portDISABLE_INTERRUPTS. Isso é feito para garantir que um tick não ocorra antes ou durante
+a chamada a xPortStartScheduler (inicialização do escalonador). As pilhas das tarefas criadas contém uma palavra de status com as interrupções ligadas, então elas vão ser re-habilitadas
+automaticamente quando a primeira tarefa começar a rodar.
+
+-Caso o uso da biblioteca NewLib esteja habilitado (configUSE_NEWLIB_REENTRANT), muda o aponteiramento da variável _impure_ptr para que ela aponte para a estrutura _reent específica
+da primeira tarefa a ser executada.
+
+-Seta o tempo de desbloqueio da próxima tarefa (xNextTaskUnblockTime) para portMAX_DELAY.
+
+-Atualiza o status do escalonador como executando, atribuindo pdTRUE à variável xSchedulerRunning.
+
+-Zera o contador de ticks (xTickCount)
+
+-Caso esteja definida a constante configGENERATE_RUN_TIME_STATS, a macro portCONFIGURE_TIMER_FOR_RUN_TIME_STATS deve ser definida para configurar o timer/contador usado para gerar
+o contador base de tempo de execução.
+
+-Chama a função xPortStartScheduler, para inicializar o escalonador, a função não deve passar desse ponto, uma vez que se o escalonador está executando, a xPortStartScheduler não retornará
+
+-Caso o kernel não tenha sido iniciado corretamente por que ou a tarefa de timers ou a tarefa idle não puderam ser criadas, há uma chamada para configASSERT.
 
 (tasks.c) xTaskPriorityDisinherit():
 -Vai decrementar a quantidade de mutexes que o tcb atual segura.
