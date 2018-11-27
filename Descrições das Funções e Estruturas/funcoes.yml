@@ -1,9 +1,9 @@
-******************************************************************************************************************************************************
-***********************************************************SESSÂO DE FUNÇÕES**************************************************************************
-******************************************************************************************************************************************************
-
-*Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
-que podem ser redefinidas para prover funcionalidades de tracing. As macros vazias não afetam o funcionamento da aplicação.
+# Este arquivo contém descrições de várias funções presentes no port para
+# Arduino Uno do sistema operacional em tempo em tempo real FreeRTOS.
+# Para maiores informações, visite: https://github.com/chabat/freeRTUNOS
+# Autores: Felipe Chabatura Neto
+#          Leonardo Tironi Fassini
+#
 
 (Arduino_FreeRTOS.h) portYIELD_WITHIN_API:
 Macro que define portYIELD_WITHIN_API como portYIELD
@@ -478,3 +478,6 @@ software foram inicializados. Se não estiverem, cria e inicializa tudo.
 - prvCheckForValidListAndQueue(){ Entra na região crítica e verifica se a queue já foi inicializada, em caso negativo, inicializa as listas de timer e cria a fila do timer.
 - Se a fila foi inicializada e INCLUDE_xTimerGetTimerDaemonTaskHandle é definido como 1, então a função de criar a tarefa daemon dos timers salvará o handle dela. Caso contrário, criará a fila sem salvá-lo.
 - Retorna pdPASS se conseguiu criar a tarefa e pdFAIL caso contrário.
+
+**Macros de Tracing: Permitem coleta de dados sobre o comportamento da aplicação durante a execução. Pontos chave do sistema possuem macros vazias
+que podem ser redefinidas para prover funcionalidades de tracing. As macros vazias não afetam o funcionamento da aplicação.

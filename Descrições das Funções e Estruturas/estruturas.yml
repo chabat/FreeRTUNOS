@@ -1,6 +1,9 @@
-******************************************************************************************************************************************************
-***********************************************************SESSÂO DE TIPOS E ESTRUTURAS***************************************************************
-******************************************************************************************************************************************************
+# Este arquivo contém descrições de várias estruturas e tipos de dados presentes
+# no port para Arduino Uno do sistema operacional em tempo em tempo real FreeRTOS.
+# Para maiores informações, visite: https://github.com/chabat/freeRTUNOS
+# Autores: Felipe Chabatura Neto
+#          Leonardo Tironi Fassini
+#
 
 TAMANHO DOS TIPOS E ESTRUTURAS::
 
